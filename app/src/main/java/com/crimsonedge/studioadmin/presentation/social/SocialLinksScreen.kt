@@ -90,8 +90,12 @@ fun SocialLinksScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedSocialLinks by remember { mutableStateOf<List<SocialLink>>(emptyList()) }
 
     LaunchedEffect(uiState.socialLinks) {
+        if (uiState.socialLinks is Resource.Success) {
+            cachedSocialLinks = (uiState.socialLinks as Resource.Success).data
+        }
         if (uiState.socialLinks !is Resource.Loading) {
             isRefreshing = false
         }
@@ -202,8 +206,8 @@ fun SocialLinksScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        when (val links = uiState.socialLinks) {
-            is Resource.Loading -> {
+        when {
+            uiState.socialLinks is Resource.Loading && cachedSocialLinks.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -214,7 +218,7 @@ fun SocialLinksScreen(
                 }
             }
 
-            is Resource.Error -> {
+            uiState.socialLinks is Resource.Error && cachedSocialLinks.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -222,36 +226,36 @@ fun SocialLinksScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     ErrorState(
-                        message = links.message,
+                        message = (uiState.socialLinks as Resource.Error).message,
                         onRetry = { viewModel.loadSocialLinks() }
                     )
                 }
             }
 
-            is Resource.Success -> {
-                if (links.data.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        EmptyState(
-                            message = "No social links yet.\nTap + to add one.",
-                            icon = Icons.Rounded.Inbox
-                        )
-                    }
-                } else {
-                    BrandPullToRefreshBox(
-                        isRefreshing = isRefreshing,
-                        onRefresh = {
-                            isRefreshing = true
-                            viewModel.loadSocialLinks()
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                    ) {
+            else -> {
+                val linkList = (uiState.socialLinks as? Resource.Success)?.data ?: cachedSocialLinks
+
+                BrandPullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.loadSocialLinks()
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    if (linkList.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EmptyState(
+                                message = "No social links yet.\nTap + to add one.",
+                                icon = Icons.Rounded.Inbox
+                            )
+                        }
+                    } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(
@@ -263,7 +267,7 @@ fun SocialLinksScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(
-                                items = links.data,
+                                items = linkList,
                                 key = { it.id }
                             ) { link ->
                                 SwipeToDeleteSocialItem(

@@ -53,9 +53,12 @@ private enum class ContentTab(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun ContentScreen(navController: NavController) {
+fun ContentScreen(navController: NavController, initialTab: Int = 0) {
     val tabs = ContentTab.entries
-    val pagerState = rememberPagerState(pageCount = { tabs.size })
+    val pagerState = rememberPagerState(
+        initialPage = initialTab.coerceIn(0, tabs.size - 1),
+        pageCount = { tabs.size }
+    )
     val coroutineScope = rememberCoroutineScope()
 
     Scaffold(

@@ -67,8 +67,12 @@ fun SectionsListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedSections by remember { mutableStateOf<List<Section>>(emptyList()) }
 
     LaunchedEffect(uiState.sections) {
+        if (uiState.sections is Resource.Success) {
+            cachedSections = (uiState.sections as Resource.Success).data
+        }
         if (uiState.sections !is Resource.Loading) {
             isRefreshing = false
         }
@@ -106,8 +110,8 @@ fun SectionsListScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val sectionsState = uiState.sections) {
-            is Resource.Loading -> {
+        when {
+            uiState.sections is Resource.Loading && cachedSections.isEmpty() -> {
                 LoadingShimmer(
                     modifier = Modifier
                         .fillMaxSize()
@@ -115,9 +119,9 @@ fun SectionsListScreen(
                 )
             }
 
-            is Resource.Error -> {
+            uiState.sections is Resource.Error && cachedSections.isEmpty() -> {
                 ErrorState(
-                    message = sectionsState.message,
+                    message = (uiState.sections as Resource.Error).message,
                     onRetry = { viewModel.loadSections() },
                     modifier = Modifier
                         .fillMaxSize()
@@ -125,26 +129,26 @@ fun SectionsListScreen(
                 )
             }
 
-            is Resource.Success -> {
-                val sections = sectionsState.data
+            else -> {
+                val sectionsList = (uiState.sections as? Resource.Success)?.data ?: cachedSections
 
-                if (sections.isEmpty()) {
-                    EmptyState(
-                        message = "No sections configured yet.",
-                        icon = Icons.Rounded.ViewModule,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp)
-                    )
-                } else {
-                    BrandPullToRefreshBox(
-                        isRefreshing = isRefreshing,
-                        onRefresh = {
-                            isRefreshing = true
-                            viewModel.loadSections()
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    ) {
+                BrandPullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.loadSections()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (sectionsList.isEmpty()) {
+                        EmptyState(
+                            message = "No sections configured yet.",
+                            icon = Icons.Rounded.ViewModule,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp)
+                        )
+                    } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(
@@ -156,7 +160,7 @@ fun SectionsListScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(
-                                items = sections,
+                                items = sectionsList,
                                 key = { it.id }
                             ) { section ->
                                 SectionCard(

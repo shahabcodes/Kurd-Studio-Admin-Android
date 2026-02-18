@@ -99,8 +99,12 @@ fun ImageListScreen(
     val haptic = LocalHapticFeedback.current
     val gridState = rememberLazyGridState()
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedImages by remember { mutableStateOf<List<ImageMeta>>(emptyList()) }
 
     LaunchedEffect(uiState.images) {
+        if (uiState.images is Resource.Success) {
+            cachedImages = (uiState.images as Resource.Success).data
+        }
         if (uiState.images !is Resource.Loading) {
             isRefreshing = false
         }
@@ -259,8 +263,8 @@ fun ImageListScreen(
             }
 
             // Content area
-            when (val images = uiState.images) {
-                is Resource.Loading -> {
+            when {
+                uiState.images is Resource.Loading && cachedImages.isEmpty() -> {
                     LoadingShimmer(
                         modifier = Modifier
                             .fillMaxSize()
@@ -268,9 +272,9 @@ fun ImageListScreen(
                     )
                 }
 
-                is Resource.Error -> {
+                uiState.images is Resource.Error && cachedImages.isEmpty() -> {
                     ErrorState(
-                        message = images.message,
+                        message = (uiState.images as Resource.Error).message,
                         onRetry = { viewModel.loadImages() },
                         modifier = Modifier
                             .fillMaxSize()
@@ -278,24 +282,26 @@ fun ImageListScreen(
                     )
                 }
 
-                is Resource.Success -> {
-                    if (images.data.isEmpty()) {
-                        EmptyState(
-                            message = "No images uploaded yet.\nTap the camera button to upload your first image.",
-                            icon = Icons.Outlined.Image,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp)
-                        )
-                    } else {
-                        BrandPullToRefreshBox(
-                            isRefreshing = isRefreshing,
-                            onRefresh = {
-                                isRefreshing = true
-                                viewModel.loadImages()
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
+                else -> {
+                    val imageList = (uiState.images as? Resource.Success)?.data ?: cachedImages
+
+                    BrandPullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.loadImages()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (imageList.isEmpty()) {
+                            EmptyState(
+                                message = "No images uploaded yet.\nTap the camera button to upload your first image.",
+                                icon = Icons.Outlined.Image,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp)
+                            )
+                        } else {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(3),
                                 state = gridState,
@@ -310,7 +316,7 @@ fun ImageListScreen(
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 itemsIndexed(
-                                    items = images.data,
+                                    items = imageList,
                                     key = { _, image -> image.id }
                                 ) { index, image ->
                                     val delay = (index * 30).coerceAtMost(300)

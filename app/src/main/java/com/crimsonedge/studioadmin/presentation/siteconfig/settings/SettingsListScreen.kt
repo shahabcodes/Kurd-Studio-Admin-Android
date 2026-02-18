@@ -62,8 +62,12 @@ fun SettingsListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedSettings by remember { mutableStateOf<List<SiteSetting>>(emptyList()) }
 
     LaunchedEffect(uiState.settings) {
+        if (uiState.settings is Resource.Success) {
+            cachedSettings = (uiState.settings as Resource.Success).data
+        }
         if (uiState.settings !is Resource.Loading) {
             isRefreshing = false
         }
@@ -99,8 +103,8 @@ fun SettingsListScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (val settingsState = uiState.settings) {
-            is Resource.Loading -> {
+        when {
+            uiState.settings is Resource.Loading && cachedSettings.isEmpty() -> {
                 LoadingShimmer(
                     modifier = Modifier
                         .fillMaxSize()
@@ -108,9 +112,9 @@ fun SettingsListScreen(
                 )
             }
 
-            is Resource.Error -> {
+            uiState.settings is Resource.Error && cachedSettings.isEmpty() -> {
                 ErrorState(
-                    message = settingsState.message,
+                    message = (uiState.settings as Resource.Error).message,
                     onRetry = { viewModel.loadSettings() },
                     modifier = Modifier
                         .fillMaxSize()
@@ -118,26 +122,26 @@ fun SettingsListScreen(
                 )
             }
 
-            is Resource.Success -> {
-                val settings = settingsState.data
+            else -> {
+                val settingsList = (uiState.settings as? Resource.Success)?.data ?: cachedSettings
 
-                if (settings.isEmpty()) {
-                    EmptyState(
-                        message = "No settings configured yet.",
-                        icon = Icons.Rounded.Settings,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp)
-                    )
-                } else {
-                    BrandPullToRefreshBox(
-                        isRefreshing = isRefreshing,
-                        onRefresh = {
-                            isRefreshing = true
-                            viewModel.loadSettings()
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    ) {
+                BrandPullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.loadSettings()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (settingsList.isEmpty()) {
+                        EmptyState(
+                            message = "No settings configured yet.",
+                            icon = Icons.Rounded.Settings,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp)
+                        )
+                    } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(
@@ -149,7 +153,7 @@ fun SettingsListScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(
-                                items = settings,
+                                items = settingsList,
                                 key = { it.id }
                             ) { setting ->
                                 SettingCard(

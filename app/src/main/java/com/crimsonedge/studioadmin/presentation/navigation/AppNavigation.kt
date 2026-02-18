@@ -84,9 +84,16 @@ fun AppNavigation(
         }
 
         // Content (Artworks + Writings tabs)
-        composable(route = Screen.Content.route) {
+        composable(
+            route = Screen.Content.route,
+            arguments = listOf(navArgument("tab") {
+                type = NavType.IntType
+                defaultValue = 0
+            })
+        ) { backStackEntry ->
+            val initialTab = backStackEntry.arguments?.getInt("tab") ?: 0
             MainScaffold(navController = navController, showBottomBar = true) {
-                ContentScreen(navController = navController)
+                ContentScreen(navController = navController, initialTab = initialTab)
             }
         }
 

@@ -98,8 +98,12 @@ fun ContactListScreen(
     val haptic = LocalHapticFeedback.current
     var searchQuery by remember { mutableStateOf("") }
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
 
     LaunchedEffect(uiState.contacts) {
+        if (uiState.contacts is Resource.Success) {
+            cachedContacts = (uiState.contacts as Resource.Success).data
+        }
         if (uiState.contacts !is Resource.Loading) {
             isRefreshing = false
         }
@@ -215,8 +219,8 @@ fun ContactListScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            when (val contacts = uiState.contacts) {
-                is Resource.Loading -> {
+            when {
+                uiState.contacts is Resource.Loading && cachedContacts.isEmpty() -> {
                     LoadingShimmer(
                         modifier = Modifier
                             .fillMaxSize()
@@ -224,40 +228,41 @@ fun ContactListScreen(
                     )
                 }
 
-                is Resource.Error -> {
+                uiState.contacts is Resource.Error && cachedContacts.isEmpty() -> {
                     ErrorState(
-                        message = contacts.message,
+                        message = (uiState.contacts as Resource.Error).message,
                         onRetry = { viewModel.loadContacts() },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
 
-                is Resource.Success -> {
-                    val filteredContacts = remember(contacts.data, searchQuery) {
-                        if (searchQuery.isBlank()) contacts.data
-                        else contacts.data.filter { contact ->
+                else -> {
+                    val contactList = (uiState.contacts as? Resource.Success)?.data ?: cachedContacts
+                    val filteredContacts = remember(contactList, searchQuery) {
+                        if (searchQuery.isBlank()) contactList
+                        else contactList.filter { contact ->
                             contact.name.contains(searchQuery, ignoreCase = true) ||
                                     contact.subject.contains(searchQuery, ignoreCase = true)
                         }
                     }
 
-                    if (filteredContacts.isEmpty()) {
-                        EmptyState(
-                            message = if (searchQuery.isNotBlank()) "No contacts matching \"$searchQuery\""
-                            else if (uiState.unreadOnly) "No unread contacts"
-                            else "No contacts yet",
-                            icon = Icons.Rounded.Inbox,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        BrandPullToRefreshBox(
-                            isRefreshing = isRefreshing,
-                            onRefresh = {
-                                isRefreshing = true
-                                viewModel.loadContacts()
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
+                    BrandPullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.loadContacts()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (filteredContacts.isEmpty()) {
+                            EmptyState(
+                                message = if (searchQuery.isNotBlank()) "No contacts matching \"$searchQuery\""
+                                else if (uiState.unreadOnly) "No unread contacts"
+                                else "No contacts yet",
+                                icon = Icons.Rounded.Inbox,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(

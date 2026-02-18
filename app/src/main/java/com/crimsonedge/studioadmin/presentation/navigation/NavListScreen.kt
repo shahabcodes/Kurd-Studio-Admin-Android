@@ -94,8 +94,12 @@ fun NavListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedNavItems by remember { mutableStateOf<List<NavigationItem>>(emptyList()) }
 
     LaunchedEffect(uiState.navItems) {
+        if (uiState.navItems is Resource.Success) {
+            cachedNavItems = (uiState.navItems as Resource.Success).data
+        }
         if (uiState.navItems !is Resource.Loading) {
             isRefreshing = false
         }
@@ -206,8 +210,8 @@ fun NavListScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
-        when (val navItems = uiState.navItems) {
-            is Resource.Loading -> {
+        when {
+            uiState.navItems is Resource.Loading && cachedNavItems.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -218,7 +222,7 @@ fun NavListScreen(
                 }
             }
 
-            is Resource.Error -> {
+            uiState.navItems is Resource.Error && cachedNavItems.isEmpty() -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -226,36 +230,36 @@ fun NavListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     ErrorState(
-                        message = navItems.message,
+                        message = (uiState.navItems as Resource.Error).message,
                         onRetry = { viewModel.loadNavItems() }
                     )
                 }
             }
 
-            is Resource.Success -> {
-                if (navItems.data.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        EmptyState(
-                            message = "No navigation links yet.\nTap + to add one.",
-                            icon = Icons.Rounded.Inbox
-                        )
-                    }
-                } else {
-                    BrandPullToRefreshBox(
-                        isRefreshing = isRefreshing,
-                        onRefresh = {
-                            isRefreshing = true
-                            viewModel.loadNavItems()
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                    ) {
+            else -> {
+                val navItemList = (uiState.navItems as? Resource.Success)?.data ?: cachedNavItems
+
+                BrandPullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.loadNavItems()
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    if (navItemList.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EmptyState(
+                                message = "No navigation links yet.\nTap + to add one.",
+                                icon = Icons.Rounded.Inbox
+                            )
+                        }
+                    } else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(
@@ -267,7 +271,7 @@ fun NavListScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(
-                                items = navItems.data,
+                                items = navItemList,
                                 key = { it.id }
                             ) { item ->
                                 SwipeToDeleteNavItem(

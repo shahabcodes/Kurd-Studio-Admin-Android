@@ -207,7 +207,7 @@ private fun DashboardContent(
                     icon = Icons.Rounded.Palette,
                     tintColor = Pink400,
                     backgroundColor = Pink400.copy(alpha = 0.12f),
-                    route = Screen.Content.route
+                    route = Screen.Content.createRoute(0)
                 ),
                 StatItem(
                     label = "Writings",
@@ -215,7 +215,7 @@ private fun DashboardContent(
                     icon = Icons.Rounded.EditNote,
                     tintColor = Purple400,
                     backgroundColor = Purple400.copy(alpha = 0.12f),
-                    route = Screen.Content.route
+                    route = Screen.Content.createRoute(1)
                 ),
                 StatItem(
                     label = "Images",

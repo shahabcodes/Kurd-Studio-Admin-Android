@@ -26,7 +26,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 data class BottomNavItem(
     val label: String,
     val icon: ImageVector,
-    val route: String
+    val route: String,
+    val navRoute: String = route
 )
 
 @Composable
@@ -40,7 +41,8 @@ fun BottomNavBar(navController: NavController) {
         BottomNavItem(
             label = "Content",
             icon = Icons.Rounded.Palette,
-            route = Screen.Content.route
+            route = Screen.Content.route,
+            navRoute = Screen.Content.createRoute()
         ),
         BottomNavItem(
             label = "Images",
@@ -89,7 +91,7 @@ fun BottomNavBar(navController: NavController) {
                 onClick = {
                     if (currentRoute != item.route) {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        if (item.route == Screen.Dashboard.route) {
+                        if (item.navRoute == Screen.Dashboard.route) {
                             // For Dashboard: pop back to it directly — avoids
                             // restoreState no-op when Dashboard state was never saved.
                             navController.popBackStack(
@@ -97,7 +99,7 @@ fun BottomNavBar(navController: NavController) {
                                 inclusive = false
                             )
                         } else {
-                            navController.navigate(item.route) {
+                            navController.navigate(item.navRoute) {
                                 popUpTo(Screen.Dashboard.route) {
                                     saveState = true
                                 }

@@ -116,8 +116,12 @@ fun ArtworkListScreen(
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedArtworks by remember { mutableStateOf<List<Artwork>>(emptyList()) }
 
     LaunchedEffect(uiState.artworks) {
+        if (uiState.artworks is Resource.Success) {
+            cachedArtworks = (uiState.artworks as Resource.Success).data
+        }
         if (uiState.artworks !is Resource.Loading) {
             isRefreshing = false
         }
@@ -235,8 +239,8 @@ fun ArtworkListScreen(
             }
 
             // Content area
-            when (val artworks = uiState.artworks) {
-                is Resource.Loading -> {
+            when {
+                uiState.artworks is Resource.Loading && cachedArtworks.isEmpty() -> {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -246,53 +250,53 @@ fun ArtworkListScreen(
                         LoadingShimmer(modifier = Modifier.fillMaxSize())
                     }
                 }
-                is Resource.Error -> {
+                uiState.artworks is Resource.Error && cachedArtworks.isEmpty() -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         ErrorState(
-                            message = artworks.message,
+                            message = (uiState.artworks as Resource.Error).message,
                             onRetry = { viewModel.loadArtworks() }
                         )
                     }
                 }
-                is Resource.Success -> {
-                    // Apply search filter
-                    val filteredArtworks by remember(artworks.data, searchQuery) {
+                else -> {
+                    val artworkList = (uiState.artworks as? Resource.Success)?.data ?: cachedArtworks
+                    val filteredArtworks by remember(artworkList, searchQuery) {
                         derivedStateOf {
                             if (searchQuery.isBlank()) {
-                                artworks.data
+                                artworkList
                             } else {
-                                artworks.data.filter { artwork ->
+                                artworkList.filter { artwork ->
                                     artwork.title.contains(searchQuery, ignoreCase = true)
                                 }
                             }
                         }
                     }
 
-                    if (filteredArtworks.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            EmptyState(
-                                message = if (searchQuery.isNotBlank()) {
-                                    "No artworks matching \"$searchQuery\""
-                                } else {
-                                    "No artworks yet\nTap + to create your first artwork"
-                                }
-                            )
-                        }
-                    } else {
-                        BrandPullToRefreshBox(
-                            isRefreshing = isRefreshing,
-                            onRefresh = {
-                                isRefreshing = true
-                                viewModel.loadArtworks()
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
+                    BrandPullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.loadArtworks()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (filteredArtworks.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                EmptyState(
+                                    message = if (searchQuery.isNotBlank()) {
+                                        "No artworks matching \"$searchQuery\""
+                                    } else {
+                                        "No artworks yet\nTap + to create your first artwork"
+                                    }
+                                )
+                            }
+                        } else {
                             LazyColumn(
                                 state = lazyListState,
                                 modifier = Modifier.fillMaxSize(),

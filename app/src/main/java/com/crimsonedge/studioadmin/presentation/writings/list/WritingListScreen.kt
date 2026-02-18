@@ -106,8 +106,12 @@ fun WritingListScreen(
     val haptic = LocalHapticFeedback.current
     var searchQuery by remember { mutableStateOf("") }
     var isRefreshing by remember { mutableStateOf(false) }
+    var cachedWritings by remember { mutableStateOf<List<Writing>>(emptyList()) }
 
     LaunchedEffect(uiState.writings) {
+        if (uiState.writings is Resource.Success) {
+            cachedWritings = (uiState.writings as Resource.Success).data
+        }
         if (uiState.writings !is Resource.Loading) {
             isRefreshing = false
         }
@@ -212,49 +216,50 @@ fun WritingListScreen(
             }
 
             // Content area
-            when (val writings = uiState.writings) {
-                is Resource.Loading -> {
+            when {
+                uiState.writings is Resource.Loading && cachedWritings.isEmpty() -> {
                     LoadingShimmer(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 16.dp)
                     )
                 }
-                is Resource.Error -> {
+                uiState.writings is Resource.Error && cachedWritings.isEmpty() -> {
                     ErrorState(
-                        message = writings.message,
+                        message = (uiState.writings as Resource.Error).message,
                         onRetry = { viewModel.loadWritings() },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
-                is Resource.Success -> {
+                else -> {
+                    val writingList = (uiState.writings as? Resource.Success)?.data ?: cachedWritings
                     val filteredWritings = if (searchQuery.isBlank()) {
-                        writings.data
+                        writingList
                     } else {
-                        writings.data.filter { writing ->
+                        writingList.filter { writing ->
                             writing.title.contains(searchQuery, ignoreCase = true)
                         }
                     }
 
-                    if (filteredWritings.isEmpty()) {
-                        EmptyState(
-                            message = if (searchQuery.isNotBlank()) {
-                                "No writings match \"$searchQuery\"."
-                            } else {
-                                "No writings yet.\nTap + to create your first writing."
-                            },
-                            icon = Icons.Outlined.Article,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        BrandPullToRefreshBox(
-                            isRefreshing = isRefreshing,
-                            onRefresh = {
-                                isRefreshing = true
-                                viewModel.loadWritings()
-                            },
-                            modifier = Modifier.fillMaxSize()
-                        ) {
+                    BrandPullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.loadWritings()
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        if (filteredWritings.isEmpty()) {
+                            EmptyState(
+                                message = if (searchQuery.isNotBlank()) {
+                                    "No writings match \"$searchQuery\"."
+                                } else {
+                                    "No writings yet.\nTap + to create your first writing."
+                                },
+                                icon = Icons.Outlined.Article,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
                             LazyColumn(
                                 state = lazyListState,
                                 modifier = Modifier.fillMaxSize(),
