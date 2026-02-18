@@ -1,12 +1,19 @@
 package com.crimsonedge.studioadmin.presentation.common.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,11 +25,24 @@ import com.crimsonedge.studioadmin.ui.theme.BrandGradient
 
 @Composable
 fun BrandLogo(modifier: Modifier = Modifier) {
+    var tapCount by remember { mutableIntStateOf(0) }
+    var showLoveNote by remember { mutableStateOf(false) }
+
     Box(
         modifier = modifier
             .size(32.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(BrandGradient),
+            .background(BrandGradient)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                tapCount++
+                if (tapCount >= 5) {
+                    tapCount = 0
+                    showLoveNote = true
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -34,4 +54,9 @@ fun BrandLogo(modifier: Modifier = Modifier) {
             color = Color.White
         )
     }
+
+    LoveNoteOverlay(
+        visible = showLoveNote,
+        onDismiss = { showLoveNote = false }
+    )
 }

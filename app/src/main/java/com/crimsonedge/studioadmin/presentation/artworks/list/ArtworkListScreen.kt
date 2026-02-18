@@ -38,7 +38,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.material3.AlertDialog
+import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -398,40 +398,21 @@ private fun SwipeToDeleteArtworkItem(
 
     // Confirm delete dialog
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        ConfirmDialog(
+            title = "Delete Artwork",
+            message = "Are you sure you want to delete \"${artwork.title}\"? This action cannot be undone.",
+            onConfirm = {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                showDeleteDialog = false
+                isRemoved = true
+                onDelete()
+            },
+            onDismiss = {
                 showDeleteDialog = false
                 scope.launch { dismissState.snapTo(SwipeToDismissBoxValue.Settled) }
             },
-            title = { Text("Delete Artwork") },
-            text = {
-                Text("Are you sure you want to delete \"${artwork.title}\"? This action cannot be undone.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        showDeleteDialog = false
-                        isRemoved = true
-                        onDelete()
-                    }
-                ) {
-                    Text(
-                        "Delete",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        scope.launch { dismissState.snapTo(SwipeToDismissBoxValue.Settled) }
-                    }
-                ) {
-                    Text("Cancel")
-                }
-            }
+            confirmText = "Delete",
+            isDestructive = true
         )
     }
 
@@ -469,8 +450,7 @@ private fun SwipeToDeleteArtworkItem(
         ) {
             ArtworkCard(
                 artwork = artwork,
-                onEdit = onEdit,
-                onDelete = { showDeleteDialog = true }
+                onClick = onEdit
             )
         }
     }
@@ -479,13 +459,12 @@ private fun SwipeToDeleteArtworkItem(
 @Composable
 private fun ArtworkCard(
     artwork: Artwork,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onClick: () -> Unit
 ) {
-    var showMenu by remember { mutableStateOf(false) }
     val thumbnailUrl = "${BuildConfig.API_BASE_URL}images/${artwork.imageId}/thumbnail"
 
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .scaleOnPress(),
@@ -558,70 +537,15 @@ private fun ArtworkCard(
                 }
             }
 
-            Spacer(modifier = Modifier.width(4.dp))
-
             // Featured star
             if (artwork.isFeatured) {
+                Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = "Featured",
                     modifier = Modifier.size(20.dp),
-                    tint = Color(0xFFFBBF24) // Amber/gold
+                    tint = Color(0xFFFBBF24)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-            }
-
-            // Three-dot menu
-            Box {
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.MoreVert,
-                        contentDescription = "More options",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Edit") },
-                        onClick = {
-                            showMenu = false
-                            onEdit()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                "Delete",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        },
-                        onClick = {
-                            showMenu = false
-                            onDelete()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    )
-                }
             }
         }
     }

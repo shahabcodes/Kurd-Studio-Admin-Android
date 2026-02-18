@@ -398,8 +398,7 @@ private fun SwipeToDeleteWritingItem(
         ) {
             WritingCard(
                 writing = writing,
-                onEdit = onEdit,
-                onDelete = { showDeleteDialog = true },
+                onClick = onEdit,
                 modifier = Modifier.scaleOnPress()
             )
         }
@@ -409,13 +408,11 @@ private fun SwipeToDeleteWritingItem(
 @Composable
 private fun WritingCard(
     writing: Writing,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showMenu by remember { mutableStateOf(false) }
-
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
@@ -498,61 +495,6 @@ private fun WritingCard(
                         text = writing.datePublished,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(4.dp))
-
-            // Three-dot menu
-            Box {
-                IconButton(
-                    onClick = { showMenu = true },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.MoreVert,
-                        contentDescription = "More options",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Edit") },
-                        onClick = {
-                            showMenu = false
-                            onEdit()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                "Delete",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        },
-                        onClick = {
-                            showMenu = false
-                            onDelete()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
                     )
                 }
             }

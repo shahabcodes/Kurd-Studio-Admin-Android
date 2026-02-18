@@ -73,6 +73,7 @@ import com.crimsonedge.studioadmin.domain.model.ImageMeta
 import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
+import com.crimsonedge.studioadmin.presentation.common.components.FullScreenImageViewer
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
@@ -99,6 +100,7 @@ fun ImageListScreen(
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var imageToDelete by remember { mutableStateOf<ImageMeta?>(null) }
+    var fullScreenImage by remember { mutableStateOf<ImageMeta?>(null) }
 
     // Photo picker launcher
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -168,6 +170,9 @@ fun ImageListScreen(
         ) {
             ImageDetailContent(
                 image = uiState.selectedImage!!,
+                onViewFullScreen = {
+                    fullScreenImage = uiState.selectedImage
+                },
                 onDelete = {
                     imageToDelete = uiState.selectedImage
                     viewModel.selectImage(null)
@@ -176,6 +181,14 @@ fun ImageListScreen(
             )
         }
     }
+
+    // Full screen image viewer with pinch-to-zoom
+    FullScreenImageViewer(
+        imageUrl = fullScreenImage?.imageUrl ?: "",
+        contentDescription = fullScreenImage?.altText ?: fullScreenImage?.fileName,
+        visible = fullScreenImage != null,
+        onDismiss = { fullScreenImage = null }
+    )
 
     // Determine if the FAB should be expanded (grid is at the top)
     val fabExpanded = gridState.firstVisibleItemIndex == 0
@@ -349,6 +362,7 @@ private fun ImageGridItem(
 @Composable
 private fun ImageDetailContent(
     image: ImageMeta,
+    onViewFullScreen: () -> Unit,
     onDelete: () -> Unit
 ) {
     val context = LocalContext.current
@@ -359,8 +373,9 @@ private fun ImageDetailContent(
             .padding(horizontal = 20.dp)
             .padding(bottom = 32.dp)
     ) {
-        // Large preview image
+        // Large preview image — tap to view full screen
         Card(
+            onClick = onViewFullScreen,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(240.dp),

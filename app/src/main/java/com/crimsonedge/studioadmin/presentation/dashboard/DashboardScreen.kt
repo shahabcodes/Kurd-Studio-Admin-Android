@@ -94,12 +94,7 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Kurd Studio",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
+                title = {},
                 navigationIcon = {
                     Box(modifier = Modifier.padding(start = 12.dp)) {
                         BrandLogo()
