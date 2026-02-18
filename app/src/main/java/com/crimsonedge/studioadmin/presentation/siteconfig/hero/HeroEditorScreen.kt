@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,16 +23,15 @@ import androidx.compose.material.icons.rounded.FormatQuote
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Title
+import androidx.compose.material.icons.rounded.ToggleOn
 import androidx.compose.material.icons.rounded.TouchApp
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.FormSectionCard
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.ImagePickerDialog
@@ -120,19 +119,14 @@ fun HeroEditorScreen(
                         .padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Active Toggle
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    // Status Section
+                    FormSectionCard(
+                        title = "Status",
+                        icon = Icons.Rounded.ToggleOn,
+                        subtitle = "Hero visibility"
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
@@ -163,197 +157,202 @@ fun HeroEditorScreen(
                         }
                     }
 
-                    // Featured Image Section
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    // Media Section
+                    FormSectionCard(
+                        title = "Media",
+                        icon = Icons.Rounded.Image,
+                        subtitle = "Featured image"
                     ) {
-                        Column(
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp)
+                                .aspectRatio(16f / 9f)
+                                .clip(MaterialTheme.shapes.medium)
+                                .border(
+                                    width = 2.dp,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    shape = MaterialTheme.shapes.medium
+                                )
+                                .clickable { showImagePicker = true },
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "Featured Image",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16f / 9f)
-                                    .clip(MaterialTheme.shapes.medium)
-                                    .border(
-                                        width = 2.dp,
-                                        color = MaterialTheme.colorScheme.outline,
-                                        shape = MaterialTheme.shapes.medium
+                            if (uiState.featuredImageId != null) {
+                                AsyncImage(
+                                    model = "${BuildConfig.API_BASE_URL}images/${uiState.featuredImageId}/thumbnail",
+                                    contentDescription = "Featured image",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(MaterialTheme.shapes.medium)
+                                )
+                            } else {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.AddPhotoAlternate,
+                                        contentDescription = "Add image",
+                                        modifier = Modifier.size(48.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                     )
-                                    .clickable { showImagePicker = true },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (uiState.featuredImageId != null) {
-                                    AsyncImage(
-                                        model = "${BuildConfig.API_BASE_URL}images/${uiState.featuredImageId}/thumbnail",
-                                        contentDescription = "Featured image",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(MaterialTheme.shapes.medium)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Tap to select featured image",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                } else {
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.Center,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.AddPhotoAlternate,
-                                            contentDescription = "Add image",
-                                            modifier = Modifier.size(48.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "Tap to select featured image",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
                                 }
                             }
                         }
                     }
 
-                    // Headline Section
-                    SectionHeader(title = "Headlines")
+                    // Content Section
+                    FormSectionCard(
+                        title = "Content",
+                        icon = Icons.Rounded.Title,
+                        subtitle = "Headline, subheading and badge"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.headline,
+                                onValueChange = viewModel::updateHeadline,
+                                label = "Headline",
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Title,
+                                        contentDescription = null,
+                                        tint = Pink500
+                                    )
+                                }
+                            )
 
-                    FormTextField(
-                        value = uiState.headline,
-                        onValueChange = viewModel::updateHeadline,
-                        label = "Headline",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Title,
-                                contentDescription = null,
-                                tint = Pink500
+                            FormTextField(
+                                value = uiState.subheading,
+                                onValueChange = viewModel::updateSubheading,
+                                label = "Subheading",
+                                singleLine = false,
+                                maxLines = 3
+                            )
+
+                            FormTextField(
+                                value = uiState.badgeText,
+                                onValueChange = viewModel::updateBadgeText,
+                                label = "Badge Text",
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Badge,
+                                        contentDescription = null,
+                                        tint = Purple400
+                                    )
+                                }
                             )
                         }
-                    )
-
-                    FormTextField(
-                        value = uiState.subheading,
-                        onValueChange = viewModel::updateSubheading,
-                        label = "Subheading",
-                        singleLine = false,
-                        maxLines = 3
-                    )
-
-                    FormTextField(
-                        value = uiState.badgeText,
-                        onValueChange = viewModel::updateBadgeText,
-                        label = "Badge Text",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Badge,
-                                contentDescription = null,
-                                tint = Purple400
-                            )
-                        }
-                    )
+                    }
 
                     // Quote Section
-                    SectionHeader(title = "Quote")
+                    FormSectionCard(
+                        title = "Quote",
+                        icon = Icons.Rounded.FormatQuote,
+                        subtitle = "Quote and attribution"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.quote,
+                                onValueChange = viewModel::updateQuote,
+                                label = "Quote",
+                                singleLine = false,
+                                maxLines = 4,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.FormatQuote,
+                                        contentDescription = null,
+                                        tint = Pink400
+                                    )
+                                }
+                            )
 
-                    FormTextField(
-                        value = uiState.quote,
-                        onValueChange = viewModel::updateQuote,
-                        label = "Quote",
-                        singleLine = false,
-                        maxLines = 4,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.FormatQuote,
-                                contentDescription = null,
-                                tint = Pink400
+                            FormTextField(
+                                value = uiState.quoteAttribution,
+                                onValueChange = viewModel::updateQuoteAttribution,
+                                label = "Quote Attribution"
                             )
                         }
-                    )
+                    }
 
-                    FormTextField(
-                        value = uiState.quoteAttribution,
-                        onValueChange = viewModel::updateQuoteAttribution,
-                        label = "Quote Attribution"
-                    )
+                    // CTAs Section
+                    FormSectionCard(
+                        title = "CTAs",
+                        icon = Icons.Rounded.TouchApp,
+                        subtitle = "Primary and secondary call-to-action"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.primaryCtaText,
+                                onValueChange = viewModel::updatePrimaryCtaText,
+                                label = "Primary CTA Text",
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.TouchApp,
+                                        contentDescription = null,
+                                        tint = Pink500
+                                    )
+                                }
+                            )
 
-                    // CTA Section
-                    SectionHeader(title = "Call to Action - Primary")
+                            FormTextField(
+                                value = uiState.primaryCtaLink,
+                                onValueChange = viewModel::updatePrimaryCtaLink,
+                                label = "Primary CTA Link",
+                                keyboardType = KeyboardType.Uri,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Link,
+                                        contentDescription = null,
+                                        tint = Purple400
+                                    )
+                                }
+                            )
 
-                    FormTextField(
-                        value = uiState.primaryCtaText,
-                        onValueChange = viewModel::updatePrimaryCtaText,
-                        label = "Primary CTA Text",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.TouchApp,
-                                contentDescription = null,
-                                tint = Pink500
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            FormTextField(
+                                value = uiState.secondaryCtaText,
+                                onValueChange = viewModel::updateSecondaryCtaText,
+                                label = "Secondary CTA Text",
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.TouchApp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            )
+
+                            FormTextField(
+                                value = uiState.secondaryCtaLink,
+                                onValueChange = viewModel::updateSecondaryCtaLink,
+                                label = "Secondary CTA Link",
+                                keyboardType = KeyboardType.Uri,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Link,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             )
                         }
-                    )
-
-                    FormTextField(
-                        value = uiState.primaryCtaLink,
-                        onValueChange = viewModel::updatePrimaryCtaLink,
-                        label = "Primary CTA Link",
-                        keyboardType = KeyboardType.Uri,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Link,
-                                contentDescription = null,
-                                tint = Purple400
-                            )
-                        }
-                    )
-
-                    SectionHeader(title = "Call to Action - Secondary")
-
-                    FormTextField(
-                        value = uiState.secondaryCtaText,
-                        onValueChange = viewModel::updateSecondaryCtaText,
-                        label = "Secondary CTA Text",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.TouchApp,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
-
-                    FormTextField(
-                        value = uiState.secondaryCtaLink,
-                        onValueChange = viewModel::updateSecondaryCtaLink,
-                        label = "Secondary CTA Link",
-                        keyboardType = KeyboardType.Uri,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Link,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -373,32 +372,6 @@ fun HeroEditorScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
-        )
-    }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(20.dp)
-                .background(
-                    color = Pink500,
-                    shape = MaterialTheme.shapes.extraSmall
-                )
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }

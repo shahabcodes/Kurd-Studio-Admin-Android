@@ -85,12 +85,21 @@ fun BottomNavBar(navController: NavController) {
                 selected = isSelected,
                 onClick = {
                     if (currentRoute != item.route) {
-                        navController.navigate(item.route) {
-                            popUpTo(Screen.Dashboard.route) {
-                                saveState = true
+                        if (item.route == Screen.Dashboard.route) {
+                            // For Dashboard: pop back to it directly — avoids
+                            // restoreState no-op when Dashboard state was never saved.
+                            navController.popBackStack(
+                                route = Screen.Dashboard.route,
+                                inclusive = false
+                            )
+                        } else {
+                            navController.navigate(item.route) {
+                                popUpTo(Screen.Dashboard.route) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
                         }
                     }
                 },

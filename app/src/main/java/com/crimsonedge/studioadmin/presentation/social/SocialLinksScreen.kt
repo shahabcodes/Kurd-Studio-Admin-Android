@@ -30,10 +30,8 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.rounded.Inbox
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,7 +47,6 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -75,8 +72,10 @@ import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.data.remote.dto.SocialLinkRequest
 import com.crimsonedge.studioadmin.domain.model.SocialLink
 import com.crimsonedge.studioadmin.domain.util.Resource
+import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.ui.theme.Pink500
@@ -97,9 +96,9 @@ fun SocialLinksScreen(
         }
     }
 
-    // Add Dialog
+    // Add Bottom Sheet
     if (uiState.showAddDialog) {
-        SocialLinkFormDialog(
+        SocialLinkFormBottomSheet(
             title = "Add Social Link",
             initialPlatform = "",
             initialUrl = "",
@@ -121,9 +120,9 @@ fun SocialLinksScreen(
         )
     }
 
-    // Edit Dialog
+    // Edit Bottom Sheet
     uiState.editingLink?.let { link ->
-        SocialLinkFormDialog(
+        SocialLinkFormBottomSheet(
             title = "Edit Social Link",
             initialPlatform = link.platform,
             initialUrl = link.url,
@@ -148,34 +147,13 @@ fun SocialLinksScreen(
 
     // Delete Confirmation
     uiState.deletingLink?.let { link ->
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissDeleteConfirmation() },
-            title = { Text("Delete Social Link") },
-            text = {
-                Text("Are you sure you want to delete \"${link.platform}\"? This action cannot be undone.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.deleteSocialLink(link.id) },
-                    enabled = !uiState.isDeleting
-                ) {
-                    if (uiState.isDeleting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    } else {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissDeleteConfirmation() }) {
-                    Text("Cancel")
-                }
-            },
-            shape = MaterialTheme.shapes.extraLarge
+        ConfirmDialog(
+            title = "Delete Social Link",
+            message = "Are you sure you want to delete \"${link.platform}\"? This action cannot be undone.",
+            onConfirm = { viewModel.deleteSocialLink(link.id) },
+            onDismiss = { viewModel.dismissDeleteConfirmation() },
+            confirmText = "Delete",
+            isDestructive = true
         )
     }
 
@@ -516,8 +494,9 @@ private fun SocialLinkCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SocialLinkFormDialog(
+private fun SocialLinkFormBottomSheet(
     title: String,
     initialPlatform: String,
     initialUrl: String,
@@ -534,101 +513,71 @@ private fun SocialLinkFormDialog(
     var platformError by remember { mutableStateOf(false) }
     var urlError by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = { if (!isSaving) onDismiss() },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FormTextField(
-                    value = platform,
-                    onValueChange = {
-                        platform = it
-                        platformError = false
-                    },
-                    label = "Platform",
-                    isError = platformError,
-                    errorText = if (platformError) "Platform is required" else null
-                )
-
-                FormTextField(
-                    value = url,
-                    onValueChange = {
-                        url = it
-                        urlError = false
-                    },
-                    label = "URL",
-                    isError = urlError,
-                    errorText = if (urlError) "URL is required" else null
-                )
-
-                FormTextField(
-                    value = displayOrder.toString(),
-                    onValueChange = {
-                        displayOrder = it.toIntOrNull() ?: 0
-                    },
-                    label = "Display Order",
-                    keyboardType = KeyboardType.Number
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Active",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Switch(
-                        checked = isActive,
-                        onCheckedChange = { isActive = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Pink500
-                        )
-                    )
-                }
+    FormBottomSheet(
+        title = title,
+        onDismiss = onDismiss,
+        onSave = {
+            platformError = platform.isBlank()
+            urlError = url.isBlank()
+            if (!platformError && !urlError) {
+                onSave(platform.trim(), url.trim(), displayOrder, isActive)
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    platformError = platform.isBlank()
-                    urlError = url.isBlank()
-                    if (!platformError && !urlError) {
-                        onSave(platform.trim(), url.trim(), displayOrder, isActive)
-                    }
+        isSaving = isSaving
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            FormTextField(
+                value = platform,
+                onValueChange = {
+                    platform = it
+                    platformError = false
                 },
-                enabled = !isSaving
+                label = "Platform",
+                isError = platformError,
+                errorText = if (platformError) "Platform is required" else null
+            )
+
+            FormTextField(
+                value = url,
+                onValueChange = {
+                    url = it
+                    urlError = false
+                },
+                label = "URL",
+                isError = urlError,
+                errorText = if (urlError) "URL is required" else null
+            )
+
+            FormTextField(
+                value = displayOrder.toString(),
+                onValueChange = {
+                    displayOrder = it.toIntOrNull() ?: 0
+                },
+                label = "Display Order",
+                keyboardType = KeyboardType.Number
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
+                Text(
+                    text = "Active",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Switch(
+                    checked = isActive,
+                    onCheckedChange = { isActive = it },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Pink500
                     )
-                } else {
-                    Text("Save", color = MaterialTheme.colorScheme.primary)
-                }
+                )
             }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                enabled = !isSaving
-            ) {
-                Text("Cancel")
-            }
-        },
-        shape = MaterialTheme.shapes.extraLarge
-    )
+        }
+    }
 }

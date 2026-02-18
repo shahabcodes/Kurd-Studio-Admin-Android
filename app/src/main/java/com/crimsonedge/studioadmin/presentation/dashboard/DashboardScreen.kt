@@ -222,7 +222,13 @@ private fun DashboardContent(
                 ) {
                     StatCard(
                         item = statItems[0],
-                        onClick = { navController.navigate(statItems[0].route) },
+                        onClick = {
+                            navController.navigate(statItems[0].route) {
+                                popUpTo(Screen.Dashboard.route) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
@@ -238,7 +244,13 @@ private fun DashboardContent(
                 ) {
                     StatCard(
                         item = statItems[2],
-                        onClick = { navController.navigate(statItems[2].route) },
+                        onClick = {
+                            navController.navigate(statItems[2].route) {
+                                popUpTo(Screen.Dashboard.route) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
@@ -304,7 +316,11 @@ private fun DashboardContent(
 
                 AssistChip(
                     onClick = {
-                        navController.navigate(Screen.ImageList.route)
+                        navController.navigate(Screen.ImageList.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     label = { Text("Upload") },
                     leadingIcon = {

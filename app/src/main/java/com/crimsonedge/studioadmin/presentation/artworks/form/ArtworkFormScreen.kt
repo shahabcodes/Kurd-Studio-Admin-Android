@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +23,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,14 +58,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.crimsonedge.studioadmin.BuildConfig
-import com.crimsonedge.studioadmin.presentation.common.components.FormDropdown
+import com.crimsonedge.studioadmin.presentation.common.components.FormSectionCard
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.ImagePickerDialog
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ArtworkFormScreen(
     navController: NavController,
@@ -135,161 +142,188 @@ fun ArtworkFormScreen(
             ) {
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Title field
-                FormTextField(
-                    value = uiState.title,
-                    onValueChange = viewModel::updateTitle,
-                    label = "Title",
-                    isError = uiState.titleError != null,
-                    errorText = uiState.titleError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Slug field with auto-generate button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top
+                // Basic Info Section
+                FormSectionCard(
+                    title = "Basic Info",
+                    icon = Icons.Rounded.Info,
+                    subtitle = "Title, slug, type and description"
                 ) {
-                    FormTextField(
-                        value = uiState.slug,
-                        onValueChange = viewModel::updateSlug,
-                        label = "Slug",
-                        isError = uiState.slugError != null,
-                        errorText = uiState.slugError,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    IconButton(
-                        onClick = viewModel::generateSlug,
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .size(48.dp)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoFixHigh,
-                            contentDescription = "Auto-generate slug",
-                            tint = Pink500
+                        FormTextField(
+                            value = uiState.title,
+                            onValueChange = viewModel::updateTitle,
+                            label = "Title",
+                            isError = uiState.titleError != null,
+                            errorText = uiState.titleError,
+                            modifier = Modifier.fillMaxWidth()
                         )
-                    }
-                }
 
-                // Type dropdown
-                if (uiState.types.isNotEmpty()) {
-                    val typeOptions = uiState.types.map { type ->
-                        type.id.toString() to type.displayName
-                    }
-
-                    FormDropdown(
-                        selectedValue = uiState.artworkTypeId.toString(),
-                        options = typeOptions,
-                        onOptionSelected = { value ->
-                            value.toIntOrNull()?.let { viewModel.updateTypeId(it) }
-                        },
-                        label = "Artwork Type",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // Image picker section
-                Text(
-                    text = "Image",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { showImagePicker = true },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (uiState.imageId > 0) {
-                        AsyncImage(
-                            model = "${BuildConfig.API_BASE_URL}images/${uiState.imageId}/thumbnail",
-                            contentDescription = "Selected image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        // Slug with auto-generate
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.Top
                         ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Image,
-                                contentDescription = null,
-                                modifier = Modifier.size(40.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            FormTextField(
+                                value = uiState.slug,
+                                onValueChange = viewModel::updateSlug,
+                                label = "Slug",
+                                isError = uiState.slugError != null,
+                                errorText = uiState.slugError,
+                                modifier = Modifier.weight(1f)
                             )
+
+                            IconButton(
+                                onClick = viewModel::generateSlug,
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoFixHigh,
+                                    contentDescription = "Auto-generate slug",
+                                    tint = Pink500
+                                )
+                            }
+                        }
+
+                        // Type as FilterChip row
+                        if (uiState.types.isNotEmpty()) {
                             Text(
-                                text = "Tap to select an image",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                text = "Artwork Type",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                uiState.types.forEach { type ->
+                                    FilterChip(
+                                        selected = uiState.artworkTypeId == type.id,
+                                        onClick = { viewModel.updateTypeId(type.id) },
+                                        label = { Text(type.displayName) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Pink500.copy(alpha = 0.15f),
+                                            selectedLabelColor = Pink500
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        FormTextField(
+                            value = uiState.description,
+                            onValueChange = viewModel::updateDescription,
+                            label = "Description",
+                            singleLine = false,
+                            maxLines = 3,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                // Media Section
+                FormSectionCard(
+                    title = "Media",
+                    icon = Icons.Rounded.Image,
+                    subtitle = "Artwork image"
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { showImagePicker = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.imageId > 0) {
+                            AsyncImage(
+                                model = "${BuildConfig.API_BASE_URL}images/${uiState.imageId}/thumbnail",
+                                contentDescription = "Selected image",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    text = "Tap to select an image",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                            }
                         }
                     }
                 }
 
-                // Description field (multiline)
-                FormTextField(
-                    value = uiState.description,
-                    onValueChange = viewModel::updateDescription,
-                    label = "Description",
-                    singleLine = false,
-                    maxLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Featured switch
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Settings Section
+                FormSectionCard(
+                    title = "Settings",
+                    icon = Icons.Rounded.Settings,
+                    subtitle = "Featured status and display order"
                 ) {
-                    Column {
-                        Text(
-                            text = "Featured",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "Show this artwork in featured sections",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Featured switch
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Featured",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = "Show this artwork in featured sections",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Switch(
+                                checked = uiState.isFeatured,
+                                onCheckedChange = viewModel::updateFeatured,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                    checkedTrackColor = Pink500,
+                                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            )
+                        }
+
+                        FormTextField(
+                            value = uiState.displayOrder.toString(),
+                            onValueChange = viewModel::updateDisplayOrder,
+                            label = "Display Order",
+                            keyboardType = KeyboardType.Number,
+                            modifier = Modifier.width(140.dp)
                         )
                     }
-
-                    Switch(
-                        checked = uiState.isFeatured,
-                        onCheckedChange = viewModel::updateFeatured,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                            checkedTrackColor = Pink500,
-                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
                 }
-
-                // Display order field
-                FormTextField(
-                    value = uiState.displayOrder.toString(),
-                    onValueChange = viewModel::updateDisplayOrder,
-                    label = "Display Order",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.width(140.dp)
-                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 

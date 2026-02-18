@@ -31,10 +31,8 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.rounded.Inbox
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,7 +48,6 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -77,8 +74,10 @@ import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.data.remote.dto.NavigationItemRequest
 import com.crimsonedge.studioadmin.domain.model.NavigationItem
 import com.crimsonedge.studioadmin.domain.util.Resource
+import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.ui.theme.Pink500
@@ -101,9 +100,9 @@ fun NavListScreen(
         }
     }
 
-    // Add Dialog
+    // Add Bottom Sheet
     if (uiState.showAddDialog) {
-        NavItemFormDialog(
+        NavItemFormBottomSheet(
             title = "Add Navigation Link",
             initialLabel = "",
             initialLink = "",
@@ -125,9 +124,9 @@ fun NavListScreen(
         )
     }
 
-    // Edit Dialog
+    // Edit Bottom Sheet
     uiState.editingItem?.let { item ->
-        NavItemFormDialog(
+        NavItemFormBottomSheet(
             title = "Edit Navigation Link",
             initialLabel = item.label,
             initialLink = item.link,
@@ -152,34 +151,13 @@ fun NavListScreen(
 
     // Delete Confirmation
     uiState.deletingItem?.let { item ->
-        AlertDialog(
-            onDismissRequest = { viewModel.dismissDeleteConfirmation() },
-            title = { Text("Delete Navigation Link") },
-            text = {
-                Text("Are you sure you want to delete \"${item.label}\"? This action cannot be undone.")
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = { viewModel.deleteNavItem(item.id) },
-                    enabled = !uiState.isDeleting
-                ) {
-                    if (uiState.isDeleting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    } else {
-                        Text("Delete", color = MaterialTheme.colorScheme.error)
-                    }
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.dismissDeleteConfirmation() }) {
-                    Text("Cancel")
-                }
-            },
-            shape = MaterialTheme.shapes.extraLarge
+        ConfirmDialog(
+            title = "Delete Navigation Link",
+            message = "Are you sure you want to delete \"${item.label}\"? This action cannot be undone.",
+            onConfirm = { viewModel.deleteNavItem(item.id) },
+            onDismiss = { viewModel.dismissDeleteConfirmation() },
+            confirmText = "Delete",
+            isDestructive = true
         )
     }
 
@@ -527,8 +505,9 @@ private fun NavItemCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NavItemFormDialog(
+private fun NavItemFormBottomSheet(
     title: String,
     initialLabel: String,
     initialLink: String,
@@ -545,101 +524,71 @@ private fun NavItemFormDialog(
     var labelError by remember { mutableStateOf(false) }
     var linkError by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = { if (!isSaving) onDismiss() },
-        title = {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                FormTextField(
-                    value = label,
-                    onValueChange = {
-                        label = it
-                        labelError = false
-                    },
-                    label = "Label",
-                    isError = labelError,
-                    errorText = if (labelError) "Label is required" else null
-                )
-
-                FormTextField(
-                    value = link,
-                    onValueChange = {
-                        link = it
-                        linkError = false
-                    },
-                    label = "Link",
-                    isError = linkError,
-                    errorText = if (linkError) "Link is required" else null
-                )
-
-                FormTextField(
-                    value = displayOrder.toString(),
-                    onValueChange = {
-                        displayOrder = it.toIntOrNull() ?: 0
-                    },
-                    label = "Display Order",
-                    keyboardType = KeyboardType.Number
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Active",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Switch(
-                        checked = isActive,
-                        onCheckedChange = { isActive = it },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Pink500
-                        )
-                    )
-                }
+    FormBottomSheet(
+        title = title,
+        onDismiss = onDismiss,
+        onSave = {
+            labelError = label.isBlank()
+            linkError = link.isBlank()
+            if (!labelError && !linkError) {
+                onSave(label.trim(), link.trim(), displayOrder, isActive)
             }
         },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    labelError = label.isBlank()
-                    linkError = link.isBlank()
-                    if (!labelError && !linkError) {
-                        onSave(label.trim(), link.trim(), displayOrder, isActive)
-                    }
+        isSaving = isSaving
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            FormTextField(
+                value = label,
+                onValueChange = {
+                    label = it
+                    labelError = false
                 },
-                enabled = !isSaving
+                label = "Label",
+                isError = labelError,
+                errorText = if (labelError) "Label is required" else null
+            )
+
+            FormTextField(
+                value = link,
+                onValueChange = {
+                    link = it
+                    linkError = false
+                },
+                label = "Link",
+                isError = linkError,
+                errorText = if (linkError) "Link is required" else null
+            )
+
+            FormTextField(
+                value = displayOrder.toString(),
+                onValueChange = {
+                    displayOrder = it.toIntOrNull() ?: 0
+                },
+                label = "Display Order",
+                keyboardType = KeyboardType.Number
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isSaving) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
+                Text(
+                    text = "Active",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Switch(
+                    checked = isActive,
+                    onCheckedChange = { isActive = it },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color.White,
+                        checkedTrackColor = Pink500
                     )
-                } else {
-                    Text("Save", color = MaterialTheme.colorScheme.primary)
-                }
+                )
             }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                enabled = !isSaving
-            ) {
-                Text("Cancel")
-            }
-        },
-        shape = MaterialTheme.shapes.extraLarge
-    )
+        }
+    }
 }

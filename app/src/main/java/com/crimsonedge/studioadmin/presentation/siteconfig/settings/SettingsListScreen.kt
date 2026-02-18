@@ -1,12 +1,5 @@
 package com.crimsonedge.studioadmin.presentation.siteconfig.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,19 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,9 +47,9 @@ import com.crimsonedge.studioadmin.domain.model.SiteSetting
 import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
-import com.crimsonedge.studioadmin.ui.theme.Pink400
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import com.crimsonedge.studioadmin.ui.theme.Purple400
 
@@ -90,6 +79,22 @@ fun SettingsListScreen(
         uiState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
         }
+    }
+
+    // Edit Bottom Sheet
+    if (uiState.editingKey != null) {
+        val editingSetting = (uiState.settings as? Resource.Success)?.data
+            ?.firstOrNull { it.settingKey == uiState.editingKey }
+
+        SettingEditBottomSheet(
+            settingKey = uiState.editingKey ?: "",
+            settingType = editingSetting?.settingType ?: "",
+            editValue = uiState.editingValue,
+            isSaving = uiState.isSaving,
+            onValueChange = viewModel::updateEditValue,
+            onSave = { viewModel.saveEdit() },
+            onDismiss = { viewModel.cancelEdit() }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -148,13 +153,7 @@ fun SettingsListScreen(
                             ) { setting ->
                                 SettingCard(
                                     setting = setting,
-                                    isEditing = uiState.editingKey == setting.settingKey,
-                                    editValue = if (uiState.editingKey == setting.settingKey) uiState.editingValue else "",
-                                    isSaving = uiState.isSaving && uiState.editingKey == setting.settingKey,
-                                    onEditClick = { viewModel.startEdit(setting) },
-                                    onValueChange = viewModel::updateEditValue,
-                                    onSave = { viewModel.saveEdit() },
-                                    onCancel = { viewModel.cancelEdit() }
+                                    onEditClick = { viewModel.startEdit(setting) }
                                 )
                             }
                         }
@@ -174,18 +173,10 @@ fun SettingsListScreen(
 @Composable
 private fun SettingCard(
     setting: SiteSetting,
-    isEditing: Boolean,
-    editValue: String,
-    isSaving: Boolean,
-    onEditClick: () -> Unit,
-    onValueChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit
+    onEditClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(animationSpec = tween(300)),
+        modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -232,102 +223,93 @@ private fun SettingCard(
                     }
                 }
 
-                if (!isEditing) {
-                    IconButton(
-                        onClick = onEditClick,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = Pink500
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Edit,
-                            contentDescription = "Edit setting"
-                        )
-                    }
+                IconButton(
+                    onClick = onEditClick,
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = Pink500
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = "Edit setting"
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Current value display (when not editing)
-            if (!isEditing) {
-                Text(
-                    text = setting.settingValue ?: "(empty)",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (setting.settingValue != null) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    },
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            // Current value display
+            Text(
+                text = setting.settingValue ?: "(empty)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (setting.settingValue != null) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                },
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
 
-            // Editing form
-            AnimatedVisibility(
-                visible = isEditing,
-                enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
-                exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingEditBottomSheet(
+    settingKey: String,
+    settingType: String,
+    editValue: String,
+    isSaving: Boolean,
+    onValueChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    FormBottomSheet(
+        title = "Edit Setting",
+        onDismiss = onDismiss,
+        onSave = onSave,
+        isSaving = isSaving
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Setting key label
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    FormTextField(
-                        value = editValue,
-                        onValueChange = onValueChange,
-                        label = "Value",
-                        singleLine = false,
-                        maxLines = 5
+                Text(
+                    text = settingKey,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // Type badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Purple400.copy(alpha = 0.12f))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = settingType,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Purple400
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Action buttons
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Cancel button
-                        IconButton(
-                            onClick = onCancel,
-                            enabled = !isSaving,
-                            colors = IconButtonDefaults.iconButtonColors(
-                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = "Cancel"
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        // Save button
-                        IconButton(
-                            onClick = onSave,
-                            enabled = !isSaving,
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = Pink500,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        ) {
-                            if (isSaving) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Rounded.Check,
-                                    contentDescription = "Save"
-                                )
-                            }
-                        }
-                    }
                 }
             }
+
+            FormTextField(
+                value = editValue,
+                onValueChange = onValueChange,
+                label = "Value",
+                singleLine = false,
+                maxLines = 5
+            )
         }
     }
 }

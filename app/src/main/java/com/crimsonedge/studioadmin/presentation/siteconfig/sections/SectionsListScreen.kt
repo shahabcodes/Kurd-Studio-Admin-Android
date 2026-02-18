@@ -1,12 +1,5 @@
 package com.crimsonedge.studioadmin.presentation.siteconfig.sections
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,20 +18,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DragIndicator
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.ExpandLess
-import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.ViewModule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -64,10 +52,9 @@ import com.crimsonedge.studioadmin.domain.model.Section
 import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
-import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
-import com.crimsonedge.studioadmin.ui.theme.Pink400
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import com.crimsonedge.studioadmin.ui.theme.Purple400
 
@@ -97,6 +84,24 @@ fun SectionsListScreen(
         uiState.error?.let { error ->
             snackbarHostState.showSnackbar(error)
         }
+    }
+
+    // Edit Bottom Sheet
+    val editState = uiState.editState
+    if (uiState.editingSectionId != null && editState != null) {
+        SectionEditBottomSheet(
+            sectionKey = (uiState.sections as? Resource.Success)?.data
+                ?.firstOrNull { it.id == uiState.editingSectionId }?.sectionKey ?: "",
+            editState = editState,
+            isSaving = uiState.isSaving,
+            onTagChange = viewModel::updateTag,
+            onTitleChange = viewModel::updateTitle,
+            onSubtitleChange = viewModel::updateSubtitle,
+            onDisplayOrderChange = viewModel::updateDisplayOrder,
+            onIsActiveChange = viewModel::updateIsActive,
+            onSave = { viewModel.save() },
+            onDismiss = { viewModel.cancelEdit() }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -155,17 +160,7 @@ fun SectionsListScreen(
                             ) { section ->
                                 SectionCard(
                                     section = section,
-                                    isEditing = uiState.editingSectionId == section.id,
-                                    editState = if (uiState.editingSectionId == section.id) uiState.editState else null,
-                                    isSaving = uiState.isSaving && uiState.editingSectionId == section.id,
-                                    onEditClick = { viewModel.startEdit(section) },
-                                    onCancelClick = { viewModel.cancelEdit() },
-                                    onTagChange = viewModel::updateTag,
-                                    onTitleChange = viewModel::updateTitle,
-                                    onSubtitleChange = viewModel::updateSubtitle,
-                                    onDisplayOrderChange = viewModel::updateDisplayOrder,
-                                    onIsActiveChange = viewModel::updateIsActive,
-                                    onSave = { viewModel.save() }
+                                    onEditClick = { viewModel.startEdit(section) }
                                 )
                             }
                         }
@@ -185,22 +180,10 @@ fun SectionsListScreen(
 @Composable
 private fun SectionCard(
     section: Section,
-    isEditing: Boolean,
-    editState: SectionEditState?,
-    isSaving: Boolean,
-    onEditClick: () -> Unit,
-    onCancelClick: () -> Unit,
-    onTagChange: (String) -> Unit,
-    onTitleChange: (String) -> Unit,
-    onSubtitleChange: (String) -> Unit,
-    onDisplayOrderChange: (String) -> Unit,
-    onIsActiveChange: (Boolean) -> Unit,
-    onSave: () -> Unit
+    onEditClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(animationSpec = tween(300)),
+        modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -283,145 +266,142 @@ private fun SectionCard(
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Edit/Collapse button
+                // Edit button
                 IconButton(
-                    onClick = if (isEditing) onCancelClick else onEditClick,
+                    onClick = onEditClick,
                     colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = if (isEditing) MaterialTheme.colorScheme.onSurfaceVariant else Pink500
+                        contentColor = Pink500
                     )
                 ) {
                     Icon(
-                        imageVector = if (isEditing) Icons.Rounded.ExpandLess else Icons.Rounded.Edit,
-                        contentDescription = if (isEditing) "Collapse" else "Edit section"
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = "Edit section"
                     )
                 }
             }
 
-            // Summary info (when not editing)
-            if (!isEditing) {
-                Spacer(modifier = Modifier.height(8.dp))
+            // Summary info
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    if (!section.tag.isNullOrBlank()) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Purple400.copy(alpha = 0.12f))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = section.tag,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Purple400
-                            )
-                        }
-                    }
-
-                    if (!section.subtitle.isNullOrBlank()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (!section.tag.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Purple400.copy(alpha = 0.12f))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
                         Text(
-                            text = section.subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
+                            text = section.tag,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Purple400
                         )
                     }
                 }
+
+                if (!section.subtitle.isNullOrBlank()) {
+                    Text(
+                        text = section.subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
+        }
+    }
+}
 
-            // Editing form
-            AnimatedVisibility(
-                visible = isEditing && editState != null,
-                enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
-                exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(300))
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SectionEditBottomSheet(
+    sectionKey: String,
+    editState: SectionEditState,
+    isSaving: Boolean,
+    onTagChange: (String) -> Unit,
+    onTitleChange: (String) -> Unit,
+    onSubtitleChange: (String) -> Unit,
+    onDisplayOrderChange: (String) -> Unit,
+    onIsActiveChange: (Boolean) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    FormBottomSheet(
+        title = "Edit Section",
+        onDismiss = onDismiss,
+        onSave = onSave,
+        saveText = "Save Section",
+        isSaving = isSaving
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Section key label
+            Text(
+                text = sectionKey,
+                style = MaterialTheme.typography.titleSmall.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            FormTextField(
+                value = editState.tag,
+                onValueChange = onTagChange,
+                label = "Tag"
+            )
+
+            FormTextField(
+                value = editState.title,
+                onValueChange = onTitleChange,
+                label = "Title"
+            )
+
+            FormTextField(
+                value = editState.subtitle,
+                onValueChange = onSubtitleChange,
+                label = "Subtitle",
+                singleLine = false,
+                maxLines = 3
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                if (editState != null) {
-                    Column(
-                        modifier = Modifier.padding(top = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        FormTextField(
-                            value = editState.tag,
-                            onValueChange = onTagChange,
-                            label = "Tag"
+                FormTextField(
+                    value = editState.displayOrder,
+                    onValueChange = onDisplayOrderChange,
+                    label = "Display Order",
+                    keyboardType = KeyboardType.Number,
+                    modifier = Modifier.weight(1f)
+                )
+
+                // Active switch
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Active",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Switch(
+                        checked = editState.isActive,
+                        onCheckedChange = onIsActiveChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = Pink500,
+                            uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
-
-                        FormTextField(
-                            value = editState.title,
-                            onValueChange = onTitleChange,
-                            label = "Title"
-                        )
-
-                        FormTextField(
-                            value = editState.subtitle,
-                            onValueChange = onSubtitleChange,
-                            label = "Subtitle",
-                            singleLine = false,
-                            maxLines = 3
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            FormTextField(
-                                value = editState.displayOrder,
-                                onValueChange = onDisplayOrderChange,
-                                label = "Display Order",
-                                keyboardType = KeyboardType.Number,
-                                modifier = Modifier.weight(1f)
-                            )
-
-                            // Active switch
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Active",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Switch(
-                                    checked = editState.isActive,
-                                    onCheckedChange = onIsActiveChange,
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                        checkedTrackColor = Pink500,
-                                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = onCancelClick,
-                                modifier = Modifier.weight(1f),
-                                enabled = !isSaving,
-                                shape = MaterialTheme.shapes.medium
-                            ) {
-                                Text("Cancel")
-                            }
-
-                            GradientButton(
-                                text = "Save Section",
-                                onClick = onSave,
-                                isLoading = isSaving,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
+                    )
                 }
             }
         }

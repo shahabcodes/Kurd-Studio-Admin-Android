@@ -1,8 +1,5 @@
 package com.crimsonedge.studioadmin.presentation.siteconfig.profile
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,22 +13,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountCircle
-import androidx.compose.material.icons.rounded.AddAPhoto
 import androidx.compose.material.icons.rounded.AlternateEmail
+import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Numbers
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -47,7 +41,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.FormSectionCard
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.ImagePickerDialog
@@ -124,31 +118,15 @@ fun ProfileEditorScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Avatar Section
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.large,
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    FormSectionCard(
+                        title = "Avatar",
+                        icon = Icons.Rounded.CameraAlt,
+                        subtitle = "Profile picture"
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = "Avatar",
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    fontWeight = FontWeight.SemiBold
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.align(Alignment.Start)
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
                             Box(
                                 modifier = Modifier
                                     .size(100.dp)
@@ -200,130 +178,154 @@ fun ProfileEditorScreen(
                         }
                     }
 
-                    // Basic Info Section
-                    SectionHeader(title = "Basic Information")
-
-                    FormTextField(
-                        value = uiState.name,
-                        onValueChange = viewModel::updateName,
-                        label = "Name",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Person,
-                                contentDescription = null,
-                                tint = Pink500
-                            )
-                        },
-                        isError = uiState.name.isBlank() && uiState.error != null
-                    )
-
-                    FormTextField(
-                        value = uiState.tagline,
-                        onValueChange = viewModel::updateTagline,
-                        label = "Tagline"
-                    )
-
-                    FormTextField(
-                        value = uiState.bio,
-                        onValueChange = viewModel::updateBio,
-                        label = "Bio",
-                        singleLine = false,
-                        maxLines = 5
-                    )
-
-                    // Contact Info Section
-                    SectionHeader(title = "Contact & Social")
-
-                    FormTextField(
-                        value = uiState.email,
-                        onValueChange = viewModel::updateEmail,
-                        label = "Email",
-                        keyboardType = KeyboardType.Email,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Email,
-                                contentDescription = null,
-                                tint = Purple400
-                            )
-                        }
-                    )
-
-                    FormTextField(
-                        value = uiState.instagramUrl,
-                        onValueChange = viewModel::updateInstagramUrl,
-                        label = "Instagram URL",
-                        keyboardType = KeyboardType.Uri,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.AlternateEmail,
-                                contentDescription = null,
-                                tint = Pink400
-                            )
-                        }
-                    )
-
-                    FormTextField(
-                        value = uiState.twitterUrl,
-                        onValueChange = viewModel::updateTwitterUrl,
-                        label = "Twitter URL",
-                        keyboardType = KeyboardType.Uri,
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.AlternateEmail,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                    )
-
-                    // Stats Section
-                    SectionHeader(title = "Statistics")
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    // Personal Section
+                    FormSectionCard(
+                        title = "Personal",
+                        icon = Icons.Rounded.Person,
+                        subtitle = "Name, tagline and bio"
                     ) {
-                        FormTextField(
-                            value = uiState.artworksCount,
-                            onValueChange = viewModel::updateArtworksCount,
-                            label = "Artworks",
-                            modifier = Modifier.weight(1f),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Brush,
-                                    contentDescription = null,
-                                    tint = Pink500
-                                )
-                            }
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.name,
+                                onValueChange = viewModel::updateName,
+                                label = "Name",
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Person,
+                                        contentDescription = null,
+                                        tint = Pink500
+                                    )
+                                },
+                                isError = uiState.name.isBlank() && uiState.error != null
+                            )
 
-                        FormTextField(
-                            value = uiState.poemsCount,
-                            onValueChange = viewModel::updatePoemsCount,
-                            label = "Poems",
-                            modifier = Modifier.weight(1f),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.Numbers,
-                                    contentDescription = null,
-                                    tint = Purple400
-                                )
-                            }
-                        )
+                            FormTextField(
+                                value = uiState.tagline,
+                                onValueChange = viewModel::updateTagline,
+                                label = "Tagline"
+                            )
+
+                            FormTextField(
+                                value = uiState.bio,
+                                onValueChange = viewModel::updateBio,
+                                label = "Bio",
+                                singleLine = false,
+                                maxLines = 5
+                            )
+                        }
                     }
 
-                    FormTextField(
-                        value = uiState.yearsExperience,
-                        onValueChange = viewModel::updateYearsExperience,
-                        label = "Years of Experience",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Rounded.Schedule,
-                                contentDescription = null,
-                                tint = Pink400
+                    // Social Links Section
+                    FormSectionCard(
+                        title = "Social Links",
+                        icon = Icons.Rounded.Share,
+                        subtitle = "Email and social media URLs"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.email,
+                                onValueChange = viewModel::updateEmail,
+                                label = "Email",
+                                keyboardType = KeyboardType.Email,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Email,
+                                        contentDescription = null,
+                                        tint = Purple400
+                                    )
+                                }
+                            )
+
+                            FormTextField(
+                                value = uiState.instagramUrl,
+                                onValueChange = viewModel::updateInstagramUrl,
+                                label = "Instagram URL",
+                                keyboardType = KeyboardType.Uri,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.AlternateEmail,
+                                        contentDescription = null,
+                                        tint = Pink400
+                                    )
+                                }
+                            )
+
+                            FormTextField(
+                                value = uiState.twitterUrl,
+                                onValueChange = viewModel::updateTwitterUrl,
+                                label = "Twitter URL",
+                                keyboardType = KeyboardType.Uri,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.AlternateEmail,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
                             )
                         }
-                    )
+                    }
+
+                    // Statistics Section
+                    FormSectionCard(
+                        title = "Statistics",
+                        icon = Icons.Rounded.BarChart,
+                        subtitle = "Artworks, poems and experience"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                FormTextField(
+                                    value = uiState.artworksCount,
+                                    onValueChange = viewModel::updateArtworksCount,
+                                    label = "Artworks",
+                                    modifier = Modifier.weight(1f),
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Brush,
+                                            contentDescription = null,
+                                            tint = Pink500
+                                        )
+                                    }
+                                )
+
+                                FormTextField(
+                                    value = uiState.poemsCount,
+                                    onValueChange = viewModel::updatePoemsCount,
+                                    label = "Poems",
+                                    modifier = Modifier.weight(1f),
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Rounded.Numbers,
+                                            contentDescription = null,
+                                            tint = Purple400
+                                        )
+                                    }
+                                )
+                            }
+
+                            FormTextField(
+                                value = uiState.yearsExperience,
+                                onValueChange = viewModel::updateYearsExperience,
+                                label = "Years of Experience",
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Schedule,
+                                        contentDescription = null,
+                                        tint = Pink400
+                                    )
+                                }
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -344,32 +346,6 @@ fun ProfileEditorScreen(
         SnackbarHost(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
-        )
-    }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(top = 8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(20.dp)
-                .background(
-                    color = Pink500,
-                    shape = MaterialTheme.shapes.extraSmall
-                )
-        )
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = MaterialTheme.colorScheme.onBackground
         )
     }
 }

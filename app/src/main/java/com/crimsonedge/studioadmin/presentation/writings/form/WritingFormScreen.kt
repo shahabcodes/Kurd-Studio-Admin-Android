@@ -3,6 +3,8 @@ package com.crimsonedge.studioadmin.presentation.writings.form
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +19,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.automirrored.rounded.Article
+import androidx.compose.material.icons.rounded.Book
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Publish
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -40,13 +48,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.crimsonedge.studioadmin.presentation.common.components.FormDropdown
+import com.crimsonedge.studioadmin.presentation.common.components.FormSectionCard
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun WritingFormScreen(
     navController: NavController,
@@ -116,133 +124,181 @@ fun WritingFormScreen(
             ) {
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Title
-                FormTextField(
-                    value = uiState.title,
-                    onValueChange = viewModel::updateTitle,
-                    label = "Title",
-                    isError = uiState.titleError != null,
-                    errorText = uiState.titleError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Slug with auto-generate button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                // Basic Info Section
+                FormSectionCard(
+                    title = "Basic Info",
+                    icon = Icons.Rounded.Info,
+                    subtitle = "Title, slug and type"
                 ) {
-                    FormTextField(
-                        value = uiState.slug,
-                        onValueChange = viewModel::updateSlug,
-                        label = "Slug",
-                        isError = uiState.slugError != null,
-                        errorText = uiState.slugError,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    IconButton(
-                        onClick = viewModel::generateSlug,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        modifier = Modifier
-                            .padding(top = 4.dp)
-                            .size(48.dp)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AutoFixHigh,
-                            contentDescription = "Generate slug from title"
+                        FormTextField(
+                            value = uiState.title,
+                            onValueChange = viewModel::updateTitle,
+                            label = "Title",
+                            isError = uiState.titleError != null,
+                            errorText = uiState.titleError,
+                            modifier = Modifier.fillMaxWidth()
                         )
+
+                        // Slug with auto-generate
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Top,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.slug,
+                                onValueChange = viewModel::updateSlug,
+                                label = "Slug",
+                                isError = uiState.slugError != null,
+                                errorText = uiState.slugError,
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            IconButton(
+                                onClick = viewModel::generateSlug,
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ),
+                                modifier = Modifier
+                                    .padding(top = 4.dp)
+                                    .size(48.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AutoFixHigh,
+                                    contentDescription = "Generate slug from title"
+                                )
+                            }
+                        }
+
+                        // Type as FilterChip row
+                        if (uiState.types.isNotEmpty()) {
+                            Text(
+                                text = "Writing Type",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                uiState.types.forEach { type ->
+                                    FilterChip(
+                                        selected = uiState.writingTypeId == type.id,
+                                        onClick = { viewModel.updateWritingTypeId(type.id) },
+                                        label = { Text(type.displayName) },
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = Pink500.copy(alpha = 0.15f),
+                                            selectedLabelColor = Pink500
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 
-                // Writing type dropdown
-                if (uiState.types.isNotEmpty()) {
-                    FormDropdown(
-                        selectedValue = uiState.writingTypeId.toString(),
-                        options = uiState.types.map { it.id.toString() to it.displayName },
-                        onOptionSelected = { value ->
-                            value.toIntOrNull()?.let { viewModel.updateWritingTypeId(it) }
-                        },
-                        label = "Writing Type",
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                // Subtitle
-                FormTextField(
-                    value = uiState.subtitle,
-                    onValueChange = viewModel::updateSubtitle,
-                    label = "Subtitle",
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Excerpt
-                FormTextField(
-                    value = uiState.excerpt,
-                    onValueChange = viewModel::updateExcerpt,
-                    label = "Excerpt",
-                    singleLine = false,
-                    maxLines = 3,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Full content
-                FormTextField(
-                    value = uiState.fullContent,
-                    onValueChange = viewModel::updateFullContent,
-                    label = "Full Content",
-                    singleLine = false,
-                    maxLines = 8,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Date published
-                FormTextField(
-                    value = uiState.datePublished,
-                    onValueChange = viewModel::updateDatePublished,
-                    label = "Date Published",
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = "Calendar",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Novel name - conditional on type
-                AnimatedVisibility(visible = isNovelChapter) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Content Section
+                FormSectionCard(
+                    title = "Content",
+                    icon = Icons.AutoMirrored.Rounded.Article,
+                    subtitle = "Subtitle, excerpt and full content"
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         FormTextField(
-                            value = uiState.novelName,
-                            onValueChange = viewModel::updateNovelName,
-                            label = "Novel Name",
+                            value = uiState.subtitle,
+                            onValueChange = viewModel::updateSubtitle,
+                            label = "Subtitle",
                             modifier = Modifier.fillMaxWidth()
                         )
 
                         FormTextField(
-                            value = uiState.chapterNumber,
-                            onValueChange = viewModel::updateChapterNumber,
-                            label = "Chapter Number",
+                            value = uiState.excerpt,
+                            onValueChange = viewModel::updateExcerpt,
+                            label = "Excerpt",
+                            singleLine = false,
+                            maxLines = 3,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        FormTextField(
+                            value = uiState.fullContent,
+                            onValueChange = viewModel::updateFullContent,
+                            label = "Full Content",
+                            singleLine = false,
+                            maxLines = 8,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                // Novel Chapter Section (conditional)
+                AnimatedVisibility(visible = isNovelChapter) {
+                    FormSectionCard(
+                        title = "Novel Chapter",
+                        icon = Icons.Rounded.Book,
+                        subtitle = "Novel name and chapter number"
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            FormTextField(
+                                value = uiState.novelName,
+                                onValueChange = viewModel::updateNovelName,
+                                label = "Novel Name",
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            FormTextField(
+                                value = uiState.chapterNumber,
+                                onValueChange = viewModel::updateChapterNumber,
+                                label = "Chapter Number",
+                                keyboardType = KeyboardType.Number,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+
+                // Publishing Section
+                FormSectionCard(
+                    title = "Publishing",
+                    icon = Icons.Rounded.Publish,
+                    subtitle = "Date and display order"
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        FormTextField(
+                            value = uiState.datePublished,
+                            onValueChange = viewModel::updateDatePublished,
+                            label = "Date Published",
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.CalendarToday,
+                                    contentDescription = "Calendar",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        FormTextField(
+                            value = uiState.displayOrder,
+                            onValueChange = viewModel::updateDisplayOrder,
+                            label = "Display Order",
                             keyboardType = KeyboardType.Number,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
-
-                // Display order
-                FormTextField(
-                    value = uiState.displayOrder,
-                    onValueChange = viewModel::updateDisplayOrder,
-                    label = "Display Order",
-                    keyboardType = KeyboardType.Number,
-                    modifier = Modifier.fillMaxWidth()
-                )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
