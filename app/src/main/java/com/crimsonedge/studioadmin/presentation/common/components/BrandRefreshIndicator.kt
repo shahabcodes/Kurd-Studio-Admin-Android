@@ -33,6 +33,14 @@ fun BrandPullToRefreshBox(
 ) {
     val state = rememberPullToRefreshState()
 
+    // Shimmer alpha lives OUTSIDE PullToRefreshBox so it always reacts
+    // to isRefreshing changes regardless of PullToRefreshBox internal state
+    val shimmerAlpha by animateFloatAsState(
+        targetValue = if (isRefreshing) 1f else 0f,
+        animationSpec = tween(if (isRefreshing) 150 else 300),
+        label = "shimmer_alpha"
+    )
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
@@ -46,12 +54,6 @@ fun BrandPullToRefreshBox(
             )
         }
     ) {
-        val shimmerAlpha by animateFloatAsState(
-            targetValue = if (isRefreshing) 1f else 0f,
-            animationSpec = tween(if (isRefreshing) 150 else 300),
-            label = "shimmer_alpha"
-        )
-
         Box(Modifier.fillMaxSize()) {
             content()
 

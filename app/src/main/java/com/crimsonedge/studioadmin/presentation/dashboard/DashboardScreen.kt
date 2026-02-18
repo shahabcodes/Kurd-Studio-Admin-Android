@@ -88,12 +88,16 @@ fun DashboardScreen(
     val displayName by viewModel.displayName.collectAsStateWithLifecycle()
     var isRefreshing by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
+    var cachedStats by remember { mutableStateOf<DashboardStats?>(null) }
 
     LaunchedEffect(Unit) {
         isVisible = true
     }
 
     LaunchedEffect(dashboardState) {
+        if (dashboardState is Resource.Success) {
+            cachedStats = (dashboardState as Resource.Success).data
+        }
         if (dashboardState !is Resource.Loading) {
             isRefreshing = false
         }
@@ -159,16 +163,16 @@ fun DashboardScreen(
             Spacer(modifier = Modifier.height(28.dp))
 
             // Content based on state
-            when (val state = dashboardState) {
-                is Resource.Loading -> {
+            when {
+                dashboardState is Resource.Loading && cachedStats == null -> {
                     LoadingShimmer(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                is Resource.Error -> {
+                dashboardState is Resource.Error && cachedStats == null -> {
                     ErrorState(
-                        message = state.message,
+                        message = (dashboardState as Resource.Error).message,
                         onRetry = { viewModel.loadStats() },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -176,12 +180,15 @@ fun DashboardScreen(
                     )
                 }
 
-                is Resource.Success -> {
-                    DashboardContent(
-                        stats = state.data,
-                        navController = navController,
-                        isVisible = isVisible
-                    )
+                else -> {
+                    val stats = (dashboardState as? Resource.Success)?.data ?: cachedStats
+                    if (stats != null) {
+                        DashboardContent(
+                            stats = stats,
+                            navController = navController,
+                            isVisible = isVisible
+                        )
+                    }
                 }
             }
         }
@@ -449,27 +456,20 @@ private fun AnimatedCounter(
     style: androidx.compose.ui.text.TextStyle,
     color: Color
 ) {
-    // Each digit rolls independently — like an odometer
-    val targetString = targetValue.toString()
+    val animatedValue = remember { Animatable(0f) }
 
-    Row {
-        targetString.forEachIndexed { index, digit ->
-            AnimatedContent(
-                targetState = digit,
-                transitionSpec = {
-                    (slideInVertically { -it } + fadeIn(tween(300)))
-                        .togetherWith(slideOutVertically { it } + fadeOut(tween(150)))
-                },
-                label = "counter_digit_$index"
-            ) { char ->
-                Text(
-                    text = char.toString(),
-                    style = style,
-                    color = color
-                )
-            }
-        }
+    LaunchedEffect(targetValue) {
+        animatedValue.animateTo(
+            targetValue.toFloat(),
+            tween(durationMillis = 900, easing = FastOutSlowInEasing)
+        )
     }
+
+    Text(
+        text = animatedValue.value.roundToInt().toString(),
+        style = style,
+        color = color
+    )
 }
 
 private data class StatItem(
