@@ -23,6 +23,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // For physical device testing, uncomment the line below and use your machine's LAN IP:
+            // buildConfigField("String", "API_BASE_URL", "\"http://192.168.18.117:5001/api/\"")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
