@@ -57,6 +57,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -104,6 +105,13 @@ fun WritingListScreen(
     val lazyListState = rememberLazyListState()
     val haptic = LocalHapticFeedback.current
     var searchQuery by remember { mutableStateOf("") }
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.writings) {
+        if (uiState.writings !is Resource.Loading) {
+            isRefreshing = false
+        }
+    }
 
     // Show delete errors via snackbar
     LaunchedEffect(uiState.deleteError) {
@@ -239,11 +247,12 @@ fun WritingListScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        val isRefreshing = uiState.writings is Resource.Loading
-
-                        PullToRefreshBox(
+                        BrandPullToRefreshBox(
                             isRefreshing = isRefreshing,
-                            onRefresh = { viewModel.loadWritings() },
+                            onRefresh = {
+                                isRefreshing = true
+                                viewModel.loadWritings()
+                            },
                             modifier = Modifier.fillMaxSize()
                         ) {
                             LazyColumn(

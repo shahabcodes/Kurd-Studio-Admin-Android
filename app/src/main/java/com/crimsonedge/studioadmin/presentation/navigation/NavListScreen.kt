@@ -51,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -92,6 +93,13 @@ fun NavListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.navItems) {
+        if (uiState.navItems !is Resource.Loading) {
+            isRefreshing = false
+        }
+    }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
@@ -238,11 +246,12 @@ fun NavListScreen(
                         )
                     }
                 } else {
-                    val isRefreshing = uiState.navItems is Resource.Loading
-
-                    PullToRefreshBox(
+                    BrandPullToRefreshBox(
                         isRefreshing = isRefreshing,
-                        onRefresh = { viewModel.loadNavItems() },
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.loadNavItems()
+                        },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)

@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,6 +89,13 @@ fun SocialLinksScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.socialLinks) {
+        if (uiState.socialLinks !is Resource.Loading) {
+            isRefreshing = false
+        }
+    }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let { error ->
@@ -234,9 +242,12 @@ fun SocialLinksScreen(
                         )
                     }
                 } else {
-                    PullToRefreshBox(
-                        isRefreshing = false,
-                        onRefresh = { viewModel.loadSocialLinks() },
+                    BrandPullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.loadSocialLinks()
+                        },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)

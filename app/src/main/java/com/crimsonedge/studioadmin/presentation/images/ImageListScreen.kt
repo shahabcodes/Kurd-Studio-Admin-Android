@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -97,6 +98,13 @@ fun ImageListScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val gridState = rememberLazyGridState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.images) {
+        if (uiState.images !is Resource.Loading) {
+            isRefreshing = false
+        }
+    }
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var imageToDelete by remember { mutableStateOf<ImageMeta?>(null) }
@@ -280,11 +288,12 @@ fun ImageListScreen(
                                 .padding(24.dp)
                         )
                     } else {
-                        val isRefreshing = uiState.images is Resource.Loading
-
-                        PullToRefreshBox(
+                        BrandPullToRefreshBox(
                             isRefreshing = isRefreshing,
-                            onRefresh = { viewModel.loadImages() },
+                            onRefresh = {
+                                isRefreshing = true
+                                viewModel.loadImages()
+                            },
                             modifier = Modifier.fillMaxSize()
                         ) {
                             LazyVerticalGrid(

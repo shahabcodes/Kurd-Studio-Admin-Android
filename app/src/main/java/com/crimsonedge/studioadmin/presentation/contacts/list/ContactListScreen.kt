@@ -51,6 +51,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -96,6 +97,13 @@ fun ContactListScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val haptic = LocalHapticFeedback.current
     var searchQuery by remember { mutableStateOf("") }
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.contacts) {
+        if (uiState.contacts !is Resource.Loading) {
+            isRefreshing = false
+        }
+    }
 
     LaunchedEffect(uiState.deleteError) {
         uiState.deleteError?.let { error ->
@@ -242,9 +250,12 @@ fun ContactListScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     } else {
-                        PullToRefreshBox(
-                            isRefreshing = false,
-                            onRefresh = { viewModel.loadContacts() },
+                        BrandPullToRefreshBox(
+                            isRefreshing = isRefreshing,
+                            onRefresh = {
+                                isRefreshing = true
+                                viewModel.loadContacts()
+                            },
                             modifier = Modifier.fillMaxSize()
                         ) {
                             LazyColumn(

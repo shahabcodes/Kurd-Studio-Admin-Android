@@ -33,6 +33,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -136,7 +137,7 @@ fun SectionsListScreen(
                             .padding(24.dp)
                     )
                 } else {
-                    PullToRefreshBox(
+                    BrandPullToRefreshBox(
                         isRefreshing = isRefreshing,
                         onRefresh = {
                             isRefreshing = true

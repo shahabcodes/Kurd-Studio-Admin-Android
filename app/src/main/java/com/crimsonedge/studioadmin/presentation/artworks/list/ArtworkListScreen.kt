@@ -62,6 +62,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -114,6 +115,13 @@ fun ArtworkListScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val hapticFeedback = LocalHapticFeedback.current
     val lazyListState = rememberLazyListState()
+    var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.artworks) {
+        if (uiState.artworks !is Resource.Loading) {
+            isRefreshing = false
+        }
+    }
 
     // Extended FAB expanded state: expanded when at the top
     val isFabExpanded by remember {
@@ -277,11 +285,12 @@ fun ArtworkListScreen(
                             )
                         }
                     } else {
-                        val isRefreshing = uiState.artworks is Resource.Loading
-
-                        PullToRefreshBox(
+                        BrandPullToRefreshBox(
                             isRefreshing = isRefreshing,
-                            onRefresh = { viewModel.loadArtworks() },
+                            onRefresh = {
+                                isRefreshing = true
+                                viewModel.loadArtworks()
+                            },
                             modifier = Modifier.fillMaxSize()
                         ) {
                             LazyColumn(
