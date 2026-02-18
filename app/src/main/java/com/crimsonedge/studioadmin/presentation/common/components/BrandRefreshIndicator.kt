@@ -1,9 +1,7 @@
 package com.crimsonedge.studioadmin.presentation.common.components
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +14,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,18 +46,21 @@ fun BrandPullToRefreshBox(
             )
         }
     ) {
+        val shimmerAlpha by animateFloatAsState(
+            targetValue = if (isRefreshing) 1f else 0f,
+            animationSpec = tween(if (isRefreshing) 150 else 300),
+            label = "shimmer_alpha"
+        )
+
         Box(Modifier.fillMaxSize()) {
             content()
 
             // Skeleton shimmer overlay during refresh
-            AnimatedVisibility(
-                visible = isRefreshing,
-                enter = fadeIn(tween(150)),
-                exit = fadeOut(tween(300))
-            ) {
+            if (shimmerAlpha > 0f) {
                 Box(
                     Modifier
                         .fillMaxSize()
+                        .graphicsLayer { alpha = shimmerAlpha }
                         .background(MaterialTheme.colorScheme.background)
                 ) {
                     refreshingContent()
