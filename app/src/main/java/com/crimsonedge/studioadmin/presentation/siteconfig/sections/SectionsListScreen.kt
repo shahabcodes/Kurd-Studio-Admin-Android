@@ -55,7 +55,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
-import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import com.crimsonedge.studioadmin.ui.theme.Purple400
 
@@ -112,10 +112,8 @@ fun SectionsListScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         when {
             uiState.sections is Resource.Loading && cachedSections.isEmpty() -> {
-                LoadingShimmer(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(20.dp)
+                ShimmerListContent(
+                    modifier = Modifier.fillMaxSize()
                 )
             }
 

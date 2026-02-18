@@ -80,7 +80,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
-import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
 
@@ -218,7 +218,7 @@ fun NavListScreen(
                         .padding(innerPadding)
                         .padding(16.dp)
                 ) {
-                    LoadingShimmer(modifier = Modifier.fillMaxSize())
+                    ShimmerListContent(modifier = Modifier.fillMaxSize())
                 }
             }
 

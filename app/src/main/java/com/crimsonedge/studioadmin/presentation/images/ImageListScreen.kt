@@ -78,7 +78,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.FullScreenImag
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
-import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.components.ShimmerGridContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
@@ -265,10 +265,8 @@ fun ImageListScreen(
             // Content area
             when {
                 uiState.images is Resource.Loading && cachedImages.isEmpty() -> {
-                    LoadingShimmer(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp)
+                    ShimmerGridContent(
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
 
@@ -291,7 +289,8 @@ fun ImageListScreen(
                             isRefreshing = true
                             viewModel.loadImages()
                         },
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        refreshingContent = { ShimmerGridContent() }
                     ) {
                         if (imageList.isEmpty()) {
                             EmptyState(

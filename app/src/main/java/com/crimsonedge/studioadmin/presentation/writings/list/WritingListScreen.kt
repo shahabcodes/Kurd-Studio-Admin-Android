@@ -86,7 +86,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
-import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.Pink500
@@ -218,10 +218,8 @@ fun WritingListScreen(
             // Content area
             when {
                 uiState.writings is Resource.Loading && cachedWritings.isEmpty() -> {
-                    LoadingShimmer(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp)
+                    ShimmerListContent(
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
                 uiState.writings is Resource.Error && cachedWritings.isEmpty() -> {

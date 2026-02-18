@@ -95,7 +95,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
-import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.BrandGradient
@@ -247,7 +247,7 @@ fun ArtworkListScreen(
                             .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        LoadingShimmer(modifier = Modifier.fillMaxSize())
+                        ShimmerListContent(modifier = Modifier.fillMaxSize())
                     }
                 }
                 uiState.artworks is Resource.Error && cachedArtworks.isEmpty() -> {
