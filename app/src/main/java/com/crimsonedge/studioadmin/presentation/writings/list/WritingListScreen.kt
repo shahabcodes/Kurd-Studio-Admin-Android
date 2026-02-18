@@ -60,6 +60,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.crimsonedge.studioadmin.presentation.common.components.BrandPullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,6 +79,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.domain.model.Writing
@@ -115,6 +119,22 @@ fun WritingListScreen(
         if (uiState.writings !is Resource.Loading) {
             isRefreshing = false
         }
+    }
+
+    // Reload data when returning from form screen
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasResumed by remember { mutableStateOf(false) }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (hasResumed) {
+                    viewModel.loadWritings()
+                }
+                hasResumed = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Show delete errors via snackbar

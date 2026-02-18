@@ -153,6 +153,7 @@ class HeroEditorViewModel @Inject constructor(
                     }
                     is Resource.Success -> {
                         _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
+                        loadHero()
                     }
                     is Resource.Error -> {
                         _uiState.update { it.copy(isSaving = false, error = result.message) }
