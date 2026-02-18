@@ -2,11 +2,13 @@ package com.crimsonedge.studioadmin.presentation.writings.list
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,29 +23,33 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -62,7 +68,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -74,7 +83,9 @@ import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
@@ -89,6 +100,9 @@ fun WritingListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val lazyListState = rememberLazyListState()
+    val haptic = LocalHapticFeedback.current
+    var searchQuery by remember { mutableStateOf("") }
 
     // Show delete errors via snackbar
     LaunchedEffect(uiState.deleteError) {
@@ -116,25 +130,60 @@ fun WritingListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.WritingForm.createRoute(null)) },
+            ExtendedFloatingActionButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    navController.navigate(Screen.WritingForm.createRoute(null))
+                },
                 containerColor = Pink500,
                 contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Writing"
-                )
-            }
+                expanded = lazyListState.firstVisibleItemIndex == 0,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Writing"
+                    )
+                },
+                text = { Text("New Writing") }
+            )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Search bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                placeholder = { Text("Search writings...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search"
+                            )
+                        }
+                    }
+                },
+                shape = MaterialTheme.shapes.extraLarge,
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Filter chips row
             if (uiState.types.isNotEmpty()) {
                 LazyRow(
@@ -186,9 +235,21 @@ fun WritingListScreen(
                     )
                 }
                 is Resource.Success -> {
-                    if (writings.data.isEmpty()) {
+                    val filteredWritings = if (searchQuery.isBlank()) {
+                        writings.data
+                    } else {
+                        writings.data.filter { writing ->
+                            writing.title.contains(searchQuery, ignoreCase = true)
+                        }
+                    }
+
+                    if (filteredWritings.isEmpty()) {
                         EmptyState(
-                            message = "No writings yet.\nTap + to create your first writing.",
+                            message = if (searchQuery.isNotBlank()) {
+                                "No writings match \"$searchQuery\"."
+                            } else {
+                                "No writings yet.\nTap + to create your first writing."
+                            },
                             icon = Icons.Outlined.Article,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -201,6 +262,7 @@ fun WritingListScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             LazyColumn(
+                                state = lazyListState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(
                                     start = 16.dp,
@@ -210,19 +272,35 @@ fun WritingListScreen(
                                 ),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(
-                                    items = writings.data,
-                                    key = { it.id }
-                                ) { writing ->
-                                    SwipeToDeleteWritingItem(
-                                        writing = writing,
-                                        onEdit = {
-                                            navController.navigate(
-                                                Screen.WritingForm.createRoute(writing.id)
-                                            )
-                                        },
-                                        onDelete = { viewModel.deleteWriting(writing.id) }
-                                    )
+                                itemsIndexed(
+                                    items = filteredWritings,
+                                    key = { _, writing -> writing.id }
+                                ) { index, writing ->
+                                    val animProgress = remember { Animatable(0f) }
+
+                                    LaunchedEffect(writing.id) {
+                                        kotlinx.coroutines.delay((index * 50L).coerceAtMost(500L))
+                                        animProgress.animateTo(1f, tween(300))
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .graphicsLayer {
+                                                alpha = animProgress.value
+                                                translationY = (1f - animProgress.value) * 40f
+                                            }
+                                    ) {
+                                        SwipeToDeleteWritingItem(
+                                            writing = writing,
+                                            onEdit = {
+                                                navController.navigate(
+                                                    Screen.WritingForm.createRoute(writing.id)
+                                                )
+                                            },
+                                            onDelete = { viewModel.deleteWriting(writing.id) }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -243,10 +321,12 @@ private fun SwipeToDeleteWritingItem(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isRemoved by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 showDeleteDialog = true
                 false // Don't dismiss yet, wait for confirmation
             } else {
@@ -261,6 +341,7 @@ private fun SwipeToDeleteWritingItem(
             title = "Delete Writing",
             message = "Are you sure you want to delete \"${writing.title}\"? This action cannot be undone.",
             onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 showDeleteDialog = false
                 isRemoved = true
                 onDelete()
@@ -309,7 +390,8 @@ private fun SwipeToDeleteWritingItem(
             WritingCard(
                 writing = writing,
                 onEdit = onEdit,
-                onDelete = { showDeleteDialog = true }
+                onDelete = { showDeleteDialog = true },
+                modifier = Modifier.scaleOnPress()
             )
         }
     }
@@ -319,12 +401,13 @@ private fun SwipeToDeleteWritingItem(
 private fun WritingCard(
     writing: Writing,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

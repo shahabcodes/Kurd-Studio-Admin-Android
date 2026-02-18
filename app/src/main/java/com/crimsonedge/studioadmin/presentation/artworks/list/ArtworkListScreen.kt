@@ -2,6 +2,7 @@ package com.crimsonedge.studioadmin.presentation.artworks.list
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -21,11 +22,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material.icons.outlined.Delete
@@ -40,15 +45,16 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -59,6 +65,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,8 +75,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -80,6 +90,11 @@ import coil3.compose.AsyncImage
 import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.domain.model.Artwork
 import com.crimsonedge.studioadmin.domain.util.Resource
+import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
+import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
+import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.BrandGradient
 import com.crimsonedge.studioadmin.ui.theme.Pink500
@@ -96,6 +111,19 @@ fun ArtworkListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val hapticFeedback = LocalHapticFeedback.current
+    val lazyListState = rememberLazyListState()
+
+    // Extended FAB expanded state: expanded when at the top
+    val isFabExpanded by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemIndex == 0 && !lazyListState.isScrollInProgress
+        }
+    }
+
+    // Search state
+    var isSearchVisible by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // Show delete errors via snackbar
     LaunchedEffect(uiState.deleteError) {
@@ -115,6 +143,21 @@ fun ArtworkListScreen(
                         fontWeight = FontWeight.Bold
                     )
                 },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            isSearchVisible = !isSearchVisible
+                            if (!isSearchVisible) {
+                                searchQuery = ""
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (isSearchVisible) Icons.Default.Close else Icons.Default.Search,
+                            contentDescription = if (isSearchVisible) "Close Search" else "Search"
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surface
@@ -123,25 +166,64 @@ fun ArtworkListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(Screen.ArtworkForm.createRoute(null)) },
+            ExtendedFloatingActionButton(
+                onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    navController.navigate(Screen.ArtworkForm.createRoute(null))
+                },
                 containerColor = Pink500,
                 contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Artwork"
-                )
-            }
+                expanded = isFabExpanded,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Artwork"
+                    )
+                },
+                text = { Text("New Artwork") }
+            )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Search bar
+            AnimatedVisibility(visible = isSearchVisible) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Search artworks...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear"
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Pink500,
+                        cursorColor = Pink500
+                    )
+                )
+            }
+
             // Filter chips row
             if (uiState.types.isNotEmpty()) {
                 LazyRow(
@@ -180,10 +262,12 @@ fun ArtworkListScreen(
             when (val artworks = uiState.artworks) {
                 is Resource.Loading -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        LoadingShimmer(modifier = Modifier.fillMaxSize())
                     }
                 }
                 is Resource.Error -> {
@@ -191,58 +275,38 @@ fun ArtworkListScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.Outlined.BrokenImage,
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Failed to load artworks",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = artworks.message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            TextButton(onClick = { viewModel.loadArtworks() }) {
-                                Text("Retry")
-                            }
-                        }
+                        ErrorState(
+                            message = artworks.message,
+                            onRetry = { viewModel.loadArtworks() }
+                        )
                     }
                 }
                 is Resource.Success -> {
-                    if (artworks.data.isEmpty()) {
+                    // Apply search filter
+                    val filteredArtworks by remember(artworks.data, searchQuery) {
+                        derivedStateOf {
+                            if (searchQuery.isBlank()) {
+                                artworks.data
+                            } else {
+                                artworks.data.filter { artwork ->
+                                    artwork.title.contains(searchQuery, ignoreCase = true)
+                                }
+                            }
+                        }
+                    }
+
+                    if (filteredArtworks.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Inbox,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "No artworks yet",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Tap + to create your first artwork",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                            EmptyState(
+                                message = if (searchQuery.isNotBlank()) {
+                                    "No artworks matching \"$searchQuery\""
+                                } else {
+                                    "No artworks yet\nTap + to create your first artwork"
+                                }
+                            )
                         }
                     } else {
                         val isRefreshing = uiState.artworks is Resource.Loading
@@ -253,6 +317,7 @@ fun ArtworkListScreen(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             LazyColumn(
+                                state = lazyListState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(
                                     start = 16.dp,
@@ -262,19 +327,35 @@ fun ArtworkListScreen(
                                 ),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(
-                                    items = artworks.data,
-                                    key = { it.id }
-                                ) { artwork ->
-                                    SwipeToDeleteArtworkItem(
-                                        artwork = artwork,
-                                        onEdit = {
-                                            navController.navigate(
-                                                Screen.ArtworkForm.createRoute(artwork.id)
-                                            )
-                                        },
-                                        onDelete = { viewModel.deleteArtwork(artwork.id) }
-                                    )
+                                itemsIndexed(
+                                    items = filteredArtworks,
+                                    key = { _, artwork -> artwork.id }
+                                ) { index, artwork ->
+                                    val animProgress = remember { Animatable(0f) }
+
+                                    LaunchedEffect(artwork.id) {
+                                        delay((index * 50L).coerceAtMost(500L))
+                                        animProgress.animateTo(1f, tween(300))
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .graphicsLayer {
+                                                alpha = animProgress.value
+                                                translationY = (1f - animProgress.value) * 40f
+                                            }
+                                    ) {
+                                        SwipeToDeleteArtworkItem(
+                                            artwork = artwork,
+                                            onEdit = {
+                                                navController.navigate(
+                                                    Screen.ArtworkForm.createRoute(artwork.id)
+                                                )
+                                            },
+                                            onDelete = { viewModel.deleteArtwork(artwork.id) }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -295,10 +376,12 @@ private fun SwipeToDeleteArtworkItem(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isRemoved by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val hapticFeedback = LocalHapticFeedback.current
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                 showDeleteDialog = true
                 false // Don't dismiss yet, wait for confirmation
             } else {
@@ -321,6 +404,7 @@ private fun SwipeToDeleteArtworkItem(
             confirmButton = {
                 TextButton(
                     onClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         showDeleteDialog = false
                         isRemoved = true
                         onDelete()
@@ -396,7 +480,9 @@ private fun ArtworkCard(
     val thumbnailUrl = "${BuildConfig.API_BASE_URL}images/${artwork.imageId}/thumbnail"
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .scaleOnPress(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface

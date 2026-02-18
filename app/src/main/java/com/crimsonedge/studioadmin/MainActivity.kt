@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
 import com.crimsonedge.studioadmin.presentation.navigation.AppNavigation
@@ -21,7 +21,13 @@ class MainActivity : ComponentActivity() {
     lateinit var tokenDataStore: TokenDataStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // Keep splash visible while auth state loads
+        var isReady = false
+        splashScreen.setKeepOnScreenCondition { !isReady }
+
         enableEdgeToEdge()
         setContent {
             StudioAdminTheme {
@@ -30,15 +36,17 @@ class MainActivity : ComponentActivity() {
 
                 when (isLoggedIn) {
                     null -> {
-                        // Still loading auth state - show nothing or a splash
+                        // Still loading auth state — splash screen is visible
                     }
                     true -> {
+                        isReady = true
                         AppNavigation(
                             startDestination = Screen.Dashboard.route,
                             tokenDataStore = tokenDataStore
                         )
                     }
                     false -> {
+                        isReady = true
                         AppNavigation(
                             startDestination = Screen.Login.route,
                             tokenDataStore = tokenDataStore

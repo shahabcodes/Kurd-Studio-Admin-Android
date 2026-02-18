@@ -15,6 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,6 +59,7 @@ fun BottomNavBar(navController: NavController) {
         )
     )
 
+    val haptic = LocalHapticFeedback.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -85,6 +88,7 @@ fun BottomNavBar(navController: NavController) {
                 selected = isSelected,
                 onClick = {
                     if (currentRoute != item.route) {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                         if (item.route == Screen.Dashboard.route) {
                             // For Dashboard: pop back to it directly — avoids
                             // restoreState no-op when Dashboard state was never saved.

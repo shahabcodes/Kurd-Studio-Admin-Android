@@ -4,6 +4,9 @@ import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,8 +23,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -30,7 +33,7 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
@@ -38,7 +41,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,9 +58,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,6 +74,9 @@ import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
+import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
@@ -86,6 +93,8 @@ fun ImageListScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val gridState = rememberLazyGridState()
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var imageToDelete by remember { mutableStateOf<ImageMeta?>(null) }
@@ -134,6 +143,7 @@ fun ImageListScreen(
             title = "Delete Image",
             message = "Are you sure you want to delete \"${imageToDelete!!.fileName}\"? This action cannot be undone.",
             onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 viewModel.deleteImage(imageToDelete!!.id)
                 showDeleteDialog = false
                 imageToDelete = null
@@ -166,6 +176,9 @@ fun ImageListScreen(
         }
     }
 
+    // Determine if the FAB should be expanded (grid is at the top)
+    val fabExpanded = gridState.firstVisibleItemIndex == 0
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -184,23 +197,26 @@ fun ImageListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
                 },
+                expanded = fabExpanded,
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Upload Image"
+                    )
+                },
+                text = { Text("Upload") },
                 containerColor = Pink500,
-                contentColor = Color.White,
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CameraAlt,
-                    contentDescription = "Upload Image"
-                )
-            }
+                contentColor = Color.White
+            )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -219,14 +235,11 @@ fun ImageListScreen(
             // Content area
             when (val images = uiState.images) {
                 is Resource.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        androidx.compose.material3.CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
+                    LoadingShimmer(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp)
+                    )
                 }
 
                 is Resource.Error -> {
@@ -258,6 +271,7 @@ fun ImageListScreen(
                         ) {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(3),
+                                state = gridState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(
                                     start = 12.dp,
@@ -268,13 +282,26 @@ fun ImageListScreen(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 verticalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                items(
+                                itemsIndexed(
                                     items = images.data,
-                                    key = { it.id }
-                                ) { image ->
+                                    key = { _, image -> image.id }
+                                ) { index, image ->
+                                    val delay = (index * 30).coerceAtMost(300)
+
                                     ImageGridItem(
                                         image = image,
-                                        onClick = { viewModel.selectImage(image) }
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            viewModel.selectImage(image)
+                                        },
+                                        modifier = Modifier
+                                            .animateItem(
+                                                fadeInSpec = tween(
+                                                    durationMillis = 300,
+                                                    delayMillis = delay
+                                                ),
+                                                placementSpec = tween(durationMillis = 300)
+                                            )
                                     )
                                 }
                             }
@@ -289,10 +316,12 @@ fun ImageListScreen(
 @Composable
 private fun ImageGridItem(
     image: ImageMeta,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
+            .scaleOnPress()
             .aspectRatio(1f)
             .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick),

@@ -51,6 +51,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,6 +62,7 @@ import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
+import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink400
 import com.crimsonedge.studioadmin.ui.theme.Purple400
 
@@ -165,6 +168,8 @@ private fun DashboardContent(
     navController: NavController,
     isVisible: Boolean
 ) {
+    val haptic = LocalHapticFeedback.current
+
     AnimatedVisibility(
         visible = isVisible,
         enter = fadeIn(animationSpec = tween(600, delayMillis = 200)) +
@@ -223,6 +228,7 @@ private fun DashboardContent(
                     StatCard(
                         item = statItems[0],
                         onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             navController.navigate(statItems[0].route) {
                                 popUpTo(Screen.Dashboard.route) { saveState = true }
                                 launchSingleTop = true
@@ -233,7 +239,10 @@ private fun DashboardContent(
                     )
                     StatCard(
                         item = statItems[1],
-                        onClick = { navController.navigate(statItems[1].route) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            navController.navigate(statItems[1].route)
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -245,6 +254,7 @@ private fun DashboardContent(
                     StatCard(
                         item = statItems[2],
                         onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             navController.navigate(statItems[2].route) {
                                 popUpTo(Screen.Dashboard.route) { saveState = true }
                                 launchSingleTop = true
@@ -255,7 +265,10 @@ private fun DashboardContent(
                     )
                     StatCard(
                         item = statItems[3],
-                        onClick = { navController.navigate(statItems[3].route) },
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            navController.navigate(statItems[3].route)
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -350,7 +363,9 @@ private fun StatCard(
 ) {
     ElevatedCard(
         onClick = onClick,
-        modifier = modifier.height(148.dp),
+        modifier = modifier
+            .height(148.dp)
+            .scaleOnPress(),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surface

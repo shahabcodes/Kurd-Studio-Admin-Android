@@ -2,6 +2,7 @@ package com.crimsonedge.studioadmin.presentation.contacts.list
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -22,31 +23,31 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Mail
-import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.rounded.Inbox
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -55,12 +56,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -69,11 +74,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.domain.model.Contact
 import com.crimsonedge.studioadmin.domain.util.Resource
+import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
+import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
+import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.Pink500
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +93,8 @@ fun ContactListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val haptic = LocalHapticFeedback.current
+    var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState.deleteError) {
         uiState.deleteError?.let { error ->
@@ -109,13 +120,43 @@ fun ContactListScreen(
                 scrollBehavior = scrollBehavior
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Search bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                placeholder = { Text("Search contacts...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Rounded.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search"
+                            )
+                        }
+                    }
+                },
+                shape = MaterialTheme.shapes.extraLarge,
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Filter chips
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -159,37 +200,38 @@ fun ContactListScreen(
 
             when (val contacts = uiState.contacts) {
                 is Resource.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                    }
+                    LoadingShimmer(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                    )
                 }
 
                 is Resource.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ErrorState(
-                            message = contacts.message,
-                            onRetry = { viewModel.loadContacts() }
-                        )
-                    }
+                    ErrorState(
+                        message = contacts.message,
+                        onRetry = { viewModel.loadContacts() },
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
                 is Resource.Success -> {
-                    if (contacts.data.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            EmptyState(
-                                message = if (uiState.unreadOnly) "No unread contacts" else "No contacts yet",
-                                icon = Icons.Rounded.Inbox
-                            )
+                    val filteredContacts = remember(contacts.data, searchQuery) {
+                        if (searchQuery.isBlank()) contacts.data
+                        else contacts.data.filter { contact ->
+                            contact.name.contains(searchQuery, ignoreCase = true) ||
+                                    contact.subject.contains(searchQuery, ignoreCase = true)
                         }
+                    }
+
+                    if (filteredContacts.isEmpty()) {
+                        EmptyState(
+                            message = if (searchQuery.isNotBlank()) "No contacts matching \"$searchQuery\""
+                            else if (uiState.unreadOnly) "No unread contacts"
+                            else "No contacts yet",
+                            icon = Icons.Rounded.Inbox,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     } else {
                         PullToRefreshBox(
                             isRefreshing = false,
@@ -206,19 +248,36 @@ fun ContactListScreen(
                                 ),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                items(
-                                    items = contacts.data,
-                                    key = { it.id }
-                                ) { contact ->
-                                    SwipeToDeleteContactItem(
-                                        contact = contact,
-                                        onClick = {
-                                            navController.navigate(
-                                                Screen.ContactDetail.createRoute(contact.id)
-                                            )
-                                        },
-                                        onDelete = { viewModel.deleteContact(contact.id) }
-                                    )
+                                itemsIndexed(
+                                    items = filteredContacts,
+                                    key = { _, contact -> contact.id }
+                                ) { index, contact ->
+                                    val animProgress = remember { Animatable(0f) }
+
+                                    LaunchedEffect(contact.id) {
+                                        kotlinx.coroutines.delay((index * 50L).coerceAtMost(500L))
+                                        animProgress.animateTo(1f, tween(300))
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .graphicsLayer {
+                                                alpha = animProgress.value
+                                                translationY = (1f - animProgress.value) * 40f
+                                            }
+                                    ) {
+                                        SwipeToDeleteContactItem(
+                                            contact = contact,
+                                            onClick = {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                navController.navigate(
+                                                    Screen.ContactDetail.createRoute(contact.id)
+                                                )
+                                            },
+                                            onDelete = { viewModel.deleteContact(contact.id) }
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -238,10 +297,13 @@ private fun SwipeToDeleteContactItem(
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isRemoved by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 showDeleteDialog = true
                 false
             } else {
@@ -251,27 +313,21 @@ private fun SwipeToDeleteContactItem(
     )
 
     if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Contact") },
-            text = {
-                Text("Are you sure you want to delete this message from \"${contact.name}\"?")
+        ConfirmDialog(
+            title = "Delete Contact",
+            message = "Are you sure you want to delete this message from \"${contact.name}\"?",
+            onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                showDeleteDialog = false
+                isRemoved = true
+                onDelete()
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteDialog = false
-                    isRemoved = true
-                    onDelete()
-                }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
+            onDismiss = {
+                showDeleteDialog = false
+                scope.launch { dismissState.snapTo(SwipeToDismissBoxValue.Settled) }
             },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
-            },
-            shape = MaterialTheme.shapes.extraLarge
+            confirmText = "Delete",
+            isDestructive = true
         )
     }
 
@@ -323,6 +379,7 @@ private fun ContactCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .scaleOnPress()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
