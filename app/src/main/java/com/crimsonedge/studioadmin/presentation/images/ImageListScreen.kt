@@ -4,6 +4,9 @@ import android.text.format.Formatter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
@@ -61,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -81,6 +85,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackb
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerGridContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink500
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -318,7 +323,18 @@ fun ImageListScreen(
                                     items = imageList,
                                     key = { _, image -> image.id }
                                 ) { index, image ->
-                                    val delay = (index * 30).coerceAtMost(300)
+                                    val animProgress = remember { Animatable(0f) }
+
+                                    LaunchedEffect(image.id) {
+                                        delay((index * 40L).coerceAtMost(360L))
+                                        animProgress.animateTo(
+                                            1f,
+                                            spring(
+                                                dampingRatio = 0.6f,
+                                                stiffness = Spring.StiffnessMediumLow
+                                            )
+                                        )
+                                    }
 
                                     ImageGridItem(
                                         image = image,
@@ -328,12 +344,16 @@ fun ImageListScreen(
                                         },
                                         modifier = Modifier
                                             .animateItem(
-                                                fadeInSpec = tween(
-                                                    durationMillis = 300,
-                                                    delayMillis = delay
-                                                ),
-                                                placementSpec = tween(durationMillis = 300)
+                                                placementSpec = spring(
+                                                    stiffness = Spring.StiffnessMediumLow
+                                                )
                                             )
+                                            .graphicsLayer {
+                                                val p = animProgress.value
+                                                alpha = p.coerceIn(0f, 1f)
+                                                scaleX = 0.7f + (p * 0.3f)
+                                                scaleY = 0.7f + (p * 0.3f)
+                                            }
                                     )
                                 }
                             }

@@ -1,9 +1,15 @@
 package com.crimsonedge.studioadmin.presentation.dashboard
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +54,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlin.math.roundToInt
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -418,8 +425,8 @@ private fun StatCard(
             }
 
             Column {
-                Text(
-                    text = item.count.toString(),
+                AnimatedCounter(
+                    targetValue = item.count,
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold
                     ),
@@ -430,6 +437,35 @@ private fun StatCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedCounter(
+    targetValue: Int,
+    style: androidx.compose.ui.text.TextStyle,
+    color: Color
+) {
+    // Each digit rolls independently — like an odometer
+    val targetString = targetValue.toString()
+
+    Row {
+        targetString.forEachIndexed { index, digit ->
+            AnimatedContent(
+                targetState = digit,
+                transitionSpec = {
+                    (slideInVertically { -it } + fadeIn(tween(300)))
+                        .togetherWith(slideOutVertically { it } + fadeOut(tween(150)))
+                },
+                label = "counter_digit_$index"
+            ) { char ->
+                Text(
+                    text = char.toString(),
+                    style = style,
+                    color = color
                 )
             }
         }

@@ -3,6 +3,8 @@ package com.crimsonedge.studioadmin.presentation.artworks.list
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -335,16 +337,25 @@ fun ArtworkListScreen(
                                     val animProgress = remember { Animatable(0f) }
 
                                     LaunchedEffect(artwork.id) {
-                                        delay((index * 50L).coerceAtMost(500L))
-                                        animProgress.animateTo(1f, tween(300))
+                                        delay((index * 60L).coerceAtMost(400L))
+                                        animProgress.animateTo(
+                                            1f,
+                                            spring(
+                                                dampingRatio = 0.65f,
+                                                stiffness = Spring.StiffnessLow
+                                            )
+                                        )
                                     }
 
                                     Box(
                                         modifier = Modifier
                                             .animateItem()
                                             .graphicsLayer {
-                                                alpha = animProgress.value
-                                                translationY = (1f - animProgress.value) * 40f
+                                                val progress = animProgress.value
+                                                alpha = progress.coerceIn(0f, 1f)
+                                                translationY = (1f - progress) * 60f
+                                                scaleX = 0.85f + (progress * 0.15f)
+                                                scaleY = 0.85f + (progress * 0.15f)
                                             }
                                     ) {
                                         SwipeToDeleteArtworkItem(
