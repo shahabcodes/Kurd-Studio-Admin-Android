@@ -1,6 +1,9 @@
 package com.crimsonedge.studioadmin.presentation.more
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,12 +54,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
+import com.crimsonedge.studioadmin.presentation.common.components.LoveNoteOverlay
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.BrandGradient
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MoreScreen(
     navController: NavController,
@@ -66,6 +70,7 @@ fun MoreScreen(
     val username by tokenDataStore.username.collectAsStateWithLifecycle(initialValue = null)
     val scope = rememberCoroutineScope()
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showLoveNote by remember { mutableStateOf(false) }
 
     if (showLogoutDialog) {
         ConfirmDialog(
@@ -275,17 +280,32 @@ fun MoreScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // App version
-            Text(
-                text = "Kurd Studio Admin v1.0",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            // App version — long press to reveal love note
+            Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = 32.dp)
-            )
+                    .combinedClickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() },
+                        onClick = {},
+                        onLongClick = { showLoveNote = true }
+                    )
+            ) {
+                Text(
+                    text = "Kurd Studio Admin v1.0",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
         }
     }
+
+    // Love note overlay
+    LoveNoteOverlay(
+        visible = showLoveNote,
+        onDismiss = { showLoveNote = false }
+    )
 }
 
 @Composable

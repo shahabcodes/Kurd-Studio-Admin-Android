@@ -1,10 +1,17 @@
 package com.crimsonedge.studioadmin.presentation.auth
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -47,6 +55,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -59,6 +68,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
+import com.crimsonedge.studioadmin.presentation.common.components.HeartBurstOverlay
+import com.crimsonedge.studioadmin.presentation.common.components.LoveNoteOverlay
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import com.crimsonedge.studioadmin.ui.theme.Purple400
 
@@ -71,15 +82,44 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     var isVisible by remember { mutableStateOf(false) }
 
+    // Easter egg state
+    var logoTapCount by remember { mutableIntStateOf(0) }
+    var showLoveNote by remember { mutableStateOf(false) }
+
+    // Heart confetti on login success
+    var showHeartBurst by remember { mutableStateOf(false) }
+    var loginTriggered by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         isVisible = true
     }
 
     LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) {
-            onLoginSuccess()
+        if (uiState.isSuccess && !loginTriggered) {
+            loginTriggered = true
+            showHeartBurst = true
         }
     }
+
+    // Heartbeat animation for the logo
+    val heartbeat = rememberInfiniteTransition(label = "heartbeat")
+    val heartbeatScale by heartbeat.animateFloat(
+        initialValue = 1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 1200
+                1f at 0
+                1.08f at 100
+                1f at 200
+                1.05f at 300
+                1f at 400
+                1f at 1200
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "heartbeat_scale"
+    )
 
     Box(
         modifier = Modifier
@@ -131,16 +171,30 @@ fun LoginScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        // Brand gradient circle with "K"
+                        // Brand gradient circle with "K" - heartbeat animation + tap easter egg
                         Box(
                             modifier = Modifier
                                 .size(72.dp)
+                                .graphicsLayer {
+                                    scaleX = heartbeatScale
+                                    scaleY = heartbeatScale
+                                }
                                 .clip(CircleShape)
                                 .background(
                                     brush = Brush.linearGradient(
                                         colors = listOf(Pink500, Purple400)
                                     )
-                                ),
+                                )
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    logoTapCount++
+                                    if (logoTapCount >= 5) {
+                                        logoTapCount = 0
+                                        showLoveNote = true
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -290,5 +344,20 @@ fun LoginScreen(
                 }
             }
         }
+
+        // Heart burst confetti on login success
+        HeartBurstOverlay(
+            visible = showHeartBurst,
+            onFinished = {
+                showHeartBurst = false
+                onLoginSuccess()
+            }
+        )
+
+        // Love note easter egg overlay
+        LoveNoteOverlay(
+            visible = showLoveNote,
+            onDismiss = { showLoveNote = false }
+        )
     }
 }
