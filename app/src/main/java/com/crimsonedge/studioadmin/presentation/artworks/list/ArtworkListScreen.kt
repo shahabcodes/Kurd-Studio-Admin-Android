@@ -135,42 +135,6 @@ fun ArtworkListScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    Text(
-                        text = "Artworks",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 12.dp)) {
-                        BrandLogo()
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = {
-                            isSearchVisible = !isSearchVisible
-                            if (!isSearchVisible) {
-                                searchQuery = ""
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = if (isSearchVisible) Icons.Default.Close else Icons.Default.Search,
-                            contentDescription = if (isSearchVisible) "Close Search" else "Search"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                scrollBehavior = scrollBehavior
-            )
-        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = {
@@ -197,38 +161,36 @@ fun ArtworkListScreen(
                 .padding(innerPadding)
         ) {
             // Search bar
-            AnimatedVisibility(visible = isSearchVisible) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    placeholder = { Text("Search artworks...") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search"
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Clear"
-                                )
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.extraLarge,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Pink500,
-                        cursorColor = Pink500
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Search artworks...") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search"
                     )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear"
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Pink500,
+                    cursorColor = Pink500
                 )
-            }
+            )
 
             // Filter chips row
             if (uiState.types.isNotEmpty()) {

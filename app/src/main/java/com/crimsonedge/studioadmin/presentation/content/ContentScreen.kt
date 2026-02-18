@@ -1,4 +1,4 @@
-package com.crimsonedge.studioadmin.presentation.siteconfig
+package com.crimsonedge.studioadmin.presentation.content
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -15,18 +15,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.RocketLaunch
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.ViewModule
+import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -39,29 +35,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.crimsonedge.studioadmin.presentation.artworks.list.ArtworkListScreen
 import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
-import com.crimsonedge.studioadmin.presentation.siteconfig.hero.HeroEditorScreen
-import com.crimsonedge.studioadmin.presentation.siteconfig.profile.ProfileEditorScreen
-import com.crimsonedge.studioadmin.presentation.siteconfig.sections.SectionsListScreen
-import com.crimsonedge.studioadmin.presentation.siteconfig.settings.SettingsListScreen
+import com.crimsonedge.studioadmin.presentation.writings.list.WritingListScreen
 import com.crimsonedge.studioadmin.ui.theme.BrandGradientHorizontal
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
 
-private enum class SiteConfigTab(
+private enum class ContentTab(
     val title: String,
     val icon: ImageVector
 ) {
-    Profile("Profile", Icons.Rounded.Person),
-    Hero("Hero", Icons.Rounded.RocketLaunch),
-    Settings("Settings", Icons.Rounded.Settings),
-    Sections("Sections", Icons.Rounded.ViewModule)
+    Artworks("Artworks", Icons.Rounded.Palette),
+    Writings("Writings", Icons.Rounded.EditNote)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun SiteConfigScreen() {
-    val tabs = SiteConfigTab.entries
+fun ContentScreen(navController: NavController) {
+    val tabs = ContentTab.entries
     val pagerState = rememberPagerState(pageCount = { tabs.size })
     val coroutineScope = rememberCoroutineScope()
 
@@ -73,27 +66,22 @@ fun SiteConfigScreen() {
                         BrandLogo()
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Site Config",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            )
+                            text = "Content",
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Tab Row
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -104,7 +92,7 @@ fun SiteConfigScreen() {
                             modifier = Modifier
                                 .tabIndicatorOffset(tabPositions[pagerState.currentPage])
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
+                                .padding(horizontal = 32.dp)
                                 .background(
                                     brush = BrandGradientHorizontal,
                                     shape = MaterialTheme.shapes.extraSmall
@@ -133,7 +121,7 @@ fun SiteConfigScreen() {
                         text = {
                             Text(
                                 text = tab.title,
-                                style = MaterialTheme.typography.labelMedium.copy(
+                                style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                                 ),
                                 color = animatedColor
@@ -150,17 +138,14 @@ fun SiteConfigScreen() {
                 }
             }
 
-            // Pager Content
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
                 beyondViewportPageCount = 1
             ) { page ->
                 when (tabs[page]) {
-                    SiteConfigTab.Profile -> ProfileEditorScreen()
-                    SiteConfigTab.Hero -> HeroEditorScreen()
-                    SiteConfigTab.Settings -> SettingsListScreen()
-                    SiteConfigTab.Sections -> SectionsListScreen()
+                    ContentTab.Artworks -> ArtworkListScreen(navController = navController)
+                    ContentTab.Writings -> WritingListScreen(navController = navController)
                 }
             }
         }

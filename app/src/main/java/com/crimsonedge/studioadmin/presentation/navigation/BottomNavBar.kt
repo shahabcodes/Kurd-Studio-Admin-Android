@@ -40,7 +40,7 @@ fun BottomNavBar(navController: NavController) {
         BottomNavItem(
             label = "Content",
             icon = Icons.Rounded.Palette,
-            route = Screen.ArtworkList.route
+            route = Screen.Content.route
         ),
         BottomNavItem(
             label = "Images",

@@ -94,11 +94,8 @@ fun DashboardScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {},
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 12.dp)) {
-                        BrandLogo()
-                    }
+                title = {
+                    BrandLogo()
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
@@ -209,7 +206,7 @@ private fun DashboardContent(
                     icon = Icons.Rounded.Palette,
                     tintColor = Pink400,
                     backgroundColor = Pink400.copy(alpha = 0.12f),
-                    route = Screen.ArtworkList.route
+                    route = Screen.Content.route
                 ),
                 StatItem(
                     label = "Writings",
@@ -217,7 +214,7 @@ private fun DashboardContent(
                     icon = Icons.Rounded.EditNote,
                     tintColor = Purple400,
                     backgroundColor = Purple400.copy(alpha = 0.12f),
-                    route = Screen.WritingList.route
+                    route = Screen.Content.route
                 ),
                 StatItem(
                     label = "Images",

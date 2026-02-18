@@ -96,14 +96,13 @@ fun MoreScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "More",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         BrandLogo()
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "More",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -172,13 +171,6 @@ fun MoreScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Navigation items
-            Text(
-                text = "Content",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp)
-            )
-
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -189,18 +181,6 @@ fun MoreScreen(
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
-                MoreMenuItem(
-                    icon = Icons.Outlined.EditNote,
-                    title = "Writings",
-                    subtitle = "Manage poems, stories, and chapters",
-                    onClick = { navController.navigate(Screen.WritingList.route) }
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-
                 MoreMenuItem(
                     icon = Icons.Outlined.ContactMail,
                     title = "Contacts",

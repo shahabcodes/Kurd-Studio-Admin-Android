@@ -198,14 +198,13 @@ fun ImageListScreen(
         topBar = {
             LargeTopAppBar(
                 title = {
-                    Text(
-                        text = "Images",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         BrandLogo()
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Images",
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(

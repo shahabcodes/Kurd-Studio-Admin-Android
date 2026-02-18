@@ -21,8 +21,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
 import com.crimsonedge.studioadmin.presentation.artworks.form.ArtworkFormScreen
-import com.crimsonedge.studioadmin.presentation.artworks.list.ArtworkListScreen
 import com.crimsonedge.studioadmin.presentation.auth.LoginScreen
+import com.crimsonedge.studioadmin.presentation.content.ContentScreen
 import com.crimsonedge.studioadmin.presentation.contacts.detail.ContactDetailScreen
 import com.crimsonedge.studioadmin.presentation.contacts.list.ContactListScreen
 import com.crimsonedge.studioadmin.presentation.dashboard.DashboardScreen
@@ -31,7 +31,6 @@ import com.crimsonedge.studioadmin.presentation.more.MoreScreen
 import com.crimsonedge.studioadmin.presentation.siteconfig.SiteConfigScreen
 import com.crimsonedge.studioadmin.presentation.social.SocialLinksScreen
 import com.crimsonedge.studioadmin.presentation.writings.form.WritingFormScreen
-import com.crimsonedge.studioadmin.presentation.writings.list.WritingListScreen
 
 private const val TRANSITION_DURATION = 300
 
@@ -52,7 +51,7 @@ fun AppNavigation(
 
     val bottomBarRoutes = setOf(
         Screen.Dashboard.route,
-        Screen.ArtworkList.route,
+        Screen.Content.route,
         Screen.ImageList.route,
         Screen.SiteConfig.route,
         Screen.More.route
@@ -84,10 +83,10 @@ fun AppNavigation(
             }
         }
 
-        // Artworks
-        composable(route = Screen.ArtworkList.route) {
+        // Content (Artworks + Writings tabs)
+        composable(route = Screen.Content.route) {
             MainScaffold(navController = navController, showBottomBar = true) {
-                ArtworkListScreen(navController = navController)
+                ContentScreen(navController = navController)
             }
         }
 
@@ -100,13 +99,7 @@ fun AppNavigation(
             }
         }
 
-        // Writings
-        composable(route = Screen.WritingList.route) {
-            MainScaffold(navController = navController, showBottomBar = false) {
-                WritingListScreen(navController = navController)
-            }
-        }
-
+        // Writing Form
         composable(
             route = Screen.WritingForm.route,
             arguments = listOf(navArgument("id") { type = NavType.StringType })

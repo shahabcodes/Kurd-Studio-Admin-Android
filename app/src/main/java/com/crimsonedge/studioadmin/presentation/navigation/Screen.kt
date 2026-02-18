@@ -6,6 +6,8 @@ sealed class Screen(val route: String) {
 
     data object Dashboard : Screen("dashboard")
 
+    data object Content : Screen("content")
+
     data object ArtworkList : Screen("artworks")
 
     data object ArtworkForm : Screen("artworks/{id}") {
