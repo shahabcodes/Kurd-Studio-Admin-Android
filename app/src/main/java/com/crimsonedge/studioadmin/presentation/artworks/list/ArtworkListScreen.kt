@@ -90,6 +90,7 @@ import coil3.compose.AsyncImage
 import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.domain.model.Artwork
 import com.crimsonedge.studioadmin.domain.util.Resource
+import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
@@ -142,6 +143,11 @@ fun ArtworkListScreen(
                         text = "Artworks",
                         fontWeight = FontWeight.Bold
                     )
+                },
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                        BrandLogo()
+                    }
                 },
                 actions = {
                     IconButton(

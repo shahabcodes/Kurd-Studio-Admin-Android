@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
+import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.LoveNoteOverlay
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
@@ -99,6 +100,11 @@ fun MoreScreen(
                         text = "More",
                         fontWeight = FontWeight.Bold
                     )
+                },
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                        BrandLogo()
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background

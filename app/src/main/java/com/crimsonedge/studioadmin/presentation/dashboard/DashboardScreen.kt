@@ -22,6 +22,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.EditNote
@@ -62,6 +65,7 @@ import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
+import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink400
 import com.crimsonedge.studioadmin.ui.theme.Purple400
@@ -87,13 +91,35 @@ fun DashboardScreen(
         }
     }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Kurd Studio",
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                        BrandLogo()
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
+    ) { scaffoldPadding ->
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
             isRefreshing = true
             viewModel.loadStats()
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(scaffoldPadding)
     ) {
         Column(
             modifier = Modifier
@@ -101,7 +127,7 @@ fun DashboardScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Welcome Section
             AnimatedVisibility(
@@ -159,6 +185,7 @@ fun DashboardScreen(
                 }
             }
         }
+    }
     }
 }
 

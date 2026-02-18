@@ -71,6 +71,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.crimsonedge.studioadmin.domain.model.ImageMeta
 import com.crimsonedge.studioadmin.domain.util.Resource
+import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
@@ -188,6 +189,11 @@ fun ImageListScreen(
                         text = "Images",
                         fontWeight = FontWeight.Bold
                     )
+                },
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                        BrandLogo()
+                    }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,

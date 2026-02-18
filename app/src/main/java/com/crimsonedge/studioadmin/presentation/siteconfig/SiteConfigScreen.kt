@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.siteconfig.hero.HeroEditorScreen
 import com.crimsonedge.studioadmin.presentation.siteconfig.profile.ProfileEditorScreen
 import com.crimsonedge.studioadmin.presentation.siteconfig.sections.SectionsListScreen
@@ -70,6 +71,11 @@ fun SiteConfigScreen() {
                             fontWeight = FontWeight.Bold
                         )
                     )
+                },
+                navigationIcon = {
+                    Box(modifier = Modifier.padding(start = 12.dp)) {
+                        BrandLogo()
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
