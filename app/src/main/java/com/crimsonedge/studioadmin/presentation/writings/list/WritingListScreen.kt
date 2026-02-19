@@ -97,6 +97,7 @@ import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,9 +118,6 @@ fun WritingListScreen(
     LaunchedEffect(uiState.writings) {
         if (uiState.writings is Resource.Success) {
             cachedWritings = (uiState.writings as Resource.Success).data
-        }
-        if (uiState.writings !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -266,6 +264,10 @@ fun WritingListScreen(
                         onRefresh = {
                             isRefreshing = true
                             viewModel.loadWritings()
+                            scope.launch {
+                                viewModel.uiState.first { it.writings !is Resource.Loading }
+                                isRefreshing = false
+                            }
                         },
                         modifier = Modifier.fillMaxSize()
                     ) {

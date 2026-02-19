@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -77,6 +78,8 @@ import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink400
 import com.crimsonedge.studioadmin.ui.theme.Purple400
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +89,7 @@ fun DashboardScreen(
 ) {
     val dashboardState by viewModel.dashboardState.collectAsStateWithLifecycle()
     val displayName by viewModel.displayName.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
     var cachedStats by remember { mutableStateOf<DashboardStats?>(null) }
@@ -97,9 +101,6 @@ fun DashboardScreen(
     LaunchedEffect(dashboardState) {
         if (dashboardState is Resource.Success) {
             cachedStats = (dashboardState as Resource.Success).data
-        }
-        if (dashboardState !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -120,6 +121,10 @@ fun DashboardScreen(
         onRefresh = {
             isRefreshing = true
             viewModel.loadStats()
+            scope.launch {
+                viewModel.dashboardState.first { it !is Resource.Loading }
+                isRefreshing = false
+            }
         },
         modifier = Modifier
             .fillMaxSize()

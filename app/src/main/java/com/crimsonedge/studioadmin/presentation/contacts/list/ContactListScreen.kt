@@ -85,6 +85,7 @@ import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +97,7 @@ fun ContactListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
     var isRefreshing by remember { mutableStateOf(false) }
     var cachedContacts by remember { mutableStateOf<List<Contact>>(emptyList()) }
@@ -103,9 +105,6 @@ fun ContactListScreen(
     LaunchedEffect(uiState.contacts) {
         if (uiState.contacts is Resource.Success) {
             cachedContacts = (uiState.contacts as Resource.Success).data
-        }
-        if (uiState.contacts !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -249,6 +248,10 @@ fun ContactListScreen(
                         onRefresh = {
                             isRefreshing = true
                             viewModel.loadContacts()
+                            scope.launch {
+                                viewModel.uiState.first { it.contacts !is Resource.Loading }
+                                isRefreshing = false
+                            }
                         },
                         modifier = Modifier.fillMaxSize()
                     ) {

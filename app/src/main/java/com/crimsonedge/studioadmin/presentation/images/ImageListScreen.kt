@@ -87,6 +87,7 @@ import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -109,9 +110,6 @@ fun ImageListScreen(
     LaunchedEffect(uiState.images) {
         if (uiState.images is Resource.Success) {
             cachedImages = (uiState.images as Resource.Success).data
-        }
-        if (uiState.images !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -293,6 +291,10 @@ fun ImageListScreen(
                         onRefresh = {
                             isRefreshing = true
                             viewModel.loadImages()
+                            scope.launch {
+                                viewModel.uiState.first { it.images !is Resource.Loading }
+                                isRefreshing = false
+                            }
                         },
                         modifier = Modifier.fillMaxSize(),
                         refreshingContent = { ShimmerGridContent() }

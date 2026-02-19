@@ -53,6 +53,9 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import com.crimsonedge.studioadmin.ui.theme.Purple400
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,15 +64,13 @@ fun SettingsListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var cachedSettings by remember { mutableStateOf<List<SiteSetting>>(emptyList()) }
 
     LaunchedEffect(uiState.settings) {
         if (uiState.settings is Resource.Success) {
             cachedSettings = (uiState.settings as Resource.Success).data
-        }
-        if (uiState.settings !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -128,6 +129,10 @@ fun SettingsListScreen(
                     onRefresh = {
                         isRefreshing = true
                         viewModel.loadSettings()
+                        scope.launch {
+                            viewModel.uiState.first { it.settings !is Resource.Loading }
+                            isRefreshing = false
+                        }
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {

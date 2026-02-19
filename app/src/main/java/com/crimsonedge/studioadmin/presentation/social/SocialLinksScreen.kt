@@ -58,6 +58,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +81,8 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormBottomShee
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.ui.theme.Pink500
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,15 +92,13 @@ fun SocialLinksScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var cachedSocialLinks by remember { mutableStateOf<List<SocialLink>>(emptyList()) }
 
     LaunchedEffect(uiState.socialLinks) {
         if (uiState.socialLinks is Resource.Success) {
             cachedSocialLinks = (uiState.socialLinks as Resource.Success).data
-        }
-        if (uiState.socialLinks !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -240,6 +241,10 @@ fun SocialLinksScreen(
                     onRefresh = {
                         isRefreshing = true
                         viewModel.loadSocialLinks()
+                        scope.launch {
+                            viewModel.uiState.first { it.socialLinks !is Resource.Loading }
+                            isRefreshing = false
+                        }
                     },
                     modifier = Modifier
                         .fillMaxSize()

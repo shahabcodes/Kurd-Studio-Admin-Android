@@ -83,6 +83,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,9 +100,6 @@ fun NavListScreen(
     LaunchedEffect(uiState.navItems) {
         if (uiState.navItems is Resource.Success) {
             cachedNavItems = (uiState.navItems as Resource.Success).data
-        }
-        if (uiState.navItems !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -244,6 +242,10 @@ fun NavListScreen(
                     onRefresh = {
                         isRefreshing = true
                         viewModel.loadNavItems()
+                        scope.launch {
+                            viewModel.uiState.first { it.navItems !is Resource.Loading }
+                            isRefreshing = false
+                        }
                     },
                     modifier = Modifier
                         .fillMaxSize()

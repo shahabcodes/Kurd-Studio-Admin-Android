@@ -39,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +50,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import com.crimsonedge.studioadmin.domain.model.Section
 import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.EmptyState
@@ -66,15 +69,13 @@ fun SectionsListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var cachedSections by remember { mutableStateOf<List<Section>>(emptyList()) }
 
     LaunchedEffect(uiState.sections) {
         if (uiState.sections is Resource.Success) {
             cachedSections = (uiState.sections as Resource.Success).data
-        }
-        if (uiState.sections !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -135,6 +136,10 @@ fun SectionsListScreen(
                     onRefresh = {
                         isRefreshing = true
                         viewModel.loadSections()
+                        scope.launch {
+                            viewModel.uiState.first { it.sections !is Resource.Loading }
+                            isRefreshing = false
+                        }
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {

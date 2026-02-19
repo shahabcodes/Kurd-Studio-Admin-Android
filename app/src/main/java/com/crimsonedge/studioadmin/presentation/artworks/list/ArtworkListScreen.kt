@@ -108,6 +108,7 @@ import com.crimsonedge.studioadmin.ui.theme.BrandGradient
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,9 +128,6 @@ fun ArtworkListScreen(
     LaunchedEffect(uiState.artworks) {
         if (uiState.artworks is Resource.Success) {
             cachedArtworks = (uiState.artworks as Resource.Success).data
-        }
-        if (uiState.artworks !is Resource.Loading) {
-            isRefreshing = false
         }
     }
 
@@ -302,6 +300,10 @@ fun ArtworkListScreen(
                         onRefresh = {
                             isRefreshing = true
                             viewModel.loadArtworks()
+                            scope.launch {
+                                viewModel.uiState.first { it.artworks !is Resource.Loading }
+                                isRefreshing = false
+                            }
                         },
                         modifier = Modifier.fillMaxSize()
                     ) {
