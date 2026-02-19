@@ -78,10 +78,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crimsonedge.studioadmin.presentation.common.components.HeartBurstOverlay
 import com.crimsonedge.studioadmin.presentation.common.components.LoveNoteOverlay
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.crimsonedge.studioadmin.ui.theme.BrandGradient
 import com.crimsonedge.studioadmin.ui.theme.Pink400
 import com.crimsonedge.studioadmin.ui.theme.Pink500
 import com.crimsonedge.studioadmin.ui.theme.Purple400
+import com.crimsonedge.studioadmin.ui.theme.Purple300
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -162,17 +164,26 @@ fun LoginScreen(
         label = "particles"
     )
 
+    // ── Theme-adaptive colors ──
+    val isDark = isSystemInDarkTheme()
+    val bgColor = if (isDark) Color(0xFF08080F) else Color(0xFFFFFBFE)
+    val contentColor = if (isDark) Color.White else Color(0xFF1C1B1F)
+    val subtleColor = if (isDark) Color.White else Color(0xFF49454E)
+    val particleColor = if (isDark) Color.White else Pink500
+    val orbAlphaMultiplier = if (isDark) 1f else 0.55f
+    val glowBehindLogo = if (isDark) Pink500.copy(alpha = 0.2f) else Pink400.copy(alpha = 0.12f)
+
     // ── UI ──
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF08080F))
+            .background(bgColor)
     ) {
         // Layer 1: Animated gradient orbs
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Pink500.copy(alpha = 0.18f), Color.Transparent)
+                    listOf(Pink500.copy(alpha = 0.18f * orbAlphaMultiplier), Color.Transparent)
                 ),
                 center = Offset(
                     (0.25f + 0.2f * sin(orbTime * 0.7f)) * size.width,
@@ -182,7 +193,7 @@ fun LoginScreen(
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Purple400.copy(alpha = 0.14f), Color.Transparent)
+                    listOf(Purple400.copy(alpha = 0.14f * orbAlphaMultiplier), Color.Transparent)
                 ),
                 center = Offset(
                     (0.8f + 0.12f * sin(orbTime * 0.5f + 2f)) * size.width,
@@ -192,7 +203,7 @@ fun LoginScreen(
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Pink400.copy(alpha = 0.10f), Color.Transparent)
+                    listOf(Pink400.copy(alpha = 0.10f * orbAlphaMultiplier), Color.Transparent)
                 ),
                 center = Offset(
                     (0.5f + 0.2f * sin(orbTime * 0.3f + 4f)) * size.width,
@@ -203,7 +214,7 @@ fun LoginScreen(
         }
 
         // Layer 2: Floating particles
-        FloatingParticles(time = particleTime)
+        FloatingParticles(time = particleTime, particleColor = particleColor)
 
         // Layer 3: Content
         Column(
@@ -233,7 +244,7 @@ fun LoginScreen(
                         .size(130.dp)
                         .background(
                             Brush.radialGradient(
-                                listOf(Pink500.copy(alpha = 0.2f), Color.Transparent)
+                                listOf(glowBehindLogo, Color.Transparent)
                             )
                         )
                 )
@@ -316,7 +327,8 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 30.sp,
                     brush = Brush.linearGradient(
-                        listOf(Color.White, Pink400, Purple400)
+                        if (isDark) listOf(Color.White, Pink400, Purple400)
+                        else listOf(Pink500, Purple400, Purple300)
                     )
                 )
             )
@@ -335,7 +347,7 @@ fun LoginScreen(
                     letterSpacing = 4.sp,
                     fontWeight = FontWeight.Light
                 ),
-                color = Color.White.copy(alpha = 0.4f)
+                color = subtleColor.copy(alpha = if (isDark) 0.4f else 0.55f)
             )
 
             Spacer(Modifier.height(44.dp))
@@ -350,13 +362,20 @@ fun LoginScreen(
                         translationY = (1f - p3) * 50f
                     }
                     .clip(RoundedCornerShape(28.dp))
-                    .background(Color.White.copy(alpha = 0.05f))
+                    .background(
+                        if (isDark) Color.White.copy(alpha = 0.05f)
+                        else Color.White.copy(alpha = 0.85f)
+                    )
                     .border(
                         width = 1.dp,
                         brush = Brush.verticalGradient(
-                            listOf(
+                            if (isDark) listOf(
                                 Color.White.copy(alpha = 0.14f),
                                 Color.White.copy(alpha = 0.03f)
+                            )
+                            else listOf(
+                                Pink400.copy(alpha = 0.25f),
+                                Purple400.copy(alpha = 0.08f)
                             )
                         ),
                         shape = RoundedCornerShape(28.dp)
@@ -367,6 +386,8 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Username
+                    val fieldColors = glassFieldColors(isDark)
+
                     OutlinedTextField(
                         value = uiState.username,
                         onValueChange = viewModel::onUsernameChange,
@@ -384,7 +405,7 @@ fun LoginScreen(
                             onNext = { focusManager.moveFocus(FocusDirection.Down) }
                         ),
                         shape = RoundedCornerShape(16.dp),
-                        colors = glassFieldColors()
+                        colors = fieldColors
                     )
 
                     // Password
@@ -425,7 +446,7 @@ fun LoginScreen(
                             }
                         ),
                         shape = RoundedCornerShape(16.dp),
-                        colors = glassFieldColors()
+                        colors = fieldColors
                     )
 
                     // Error
@@ -433,7 +454,7 @@ fun LoginScreen(
                         Text(
                             text = uiState.error!!,
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFFF6B6B),
+                            color = if (isDark) Color(0xFFFF6B6B) else Color(0xFFEF4444),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -535,28 +556,48 @@ fun LoginScreen(
 // ── Glass-style text field colors ──
 
 @Composable
-private fun glassFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White.copy(alpha = 0.8f),
-    focusedContainerColor = Color.White.copy(alpha = 0.06f),
-    unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-    focusedBorderColor = Pink500,
-    unfocusedBorderColor = Color.White.copy(alpha = 0.10f),
-    cursorColor = Pink400,
-    focusedLeadingIconColor = Pink400,
-    unfocusedLeadingIconColor = Color.White.copy(alpha = 0.4f),
-    focusedTrailingIconColor = Color.White.copy(alpha = 0.7f),
-    unfocusedTrailingIconColor = Color.White.copy(alpha = 0.4f),
-    focusedPlaceholderColor = Color.White.copy(alpha = 0.35f),
-    unfocusedPlaceholderColor = Color.White.copy(alpha = 0.35f),
-    errorBorderColor = Color(0xFFFF6B6B),
-    errorTextColor = Color.White
-)
+private fun glassFieldColors(isDark: Boolean): TextFieldColors = if (isDark) {
+    OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White.copy(alpha = 0.8f),
+        focusedContainerColor = Color.White.copy(alpha = 0.06f),
+        unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
+        focusedBorderColor = Pink500,
+        unfocusedBorderColor = Color.White.copy(alpha = 0.10f),
+        cursorColor = Pink400,
+        focusedLeadingIconColor = Pink400,
+        unfocusedLeadingIconColor = Color.White.copy(alpha = 0.4f),
+        focusedTrailingIconColor = Color.White.copy(alpha = 0.7f),
+        unfocusedTrailingIconColor = Color.White.copy(alpha = 0.4f),
+        focusedPlaceholderColor = Color.White.copy(alpha = 0.35f),
+        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.35f),
+        errorBorderColor = Color(0xFFFF6B6B),
+        errorTextColor = Color.White
+    )
+} else {
+    OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color(0xFF1C1B1F),
+        unfocusedTextColor = Color(0xFF1C1B1F).copy(alpha = 0.8f),
+        focusedContainerColor = Color.White.copy(alpha = 0.7f),
+        unfocusedContainerColor = Color.White.copy(alpha = 0.5f),
+        focusedBorderColor = Pink500,
+        unfocusedBorderColor = Color(0xFF49454E).copy(alpha = 0.20f),
+        cursorColor = Pink500,
+        focusedLeadingIconColor = Pink500,
+        unfocusedLeadingIconColor = Color(0xFF49454E).copy(alpha = 0.6f),
+        focusedTrailingIconColor = Color(0xFF49454E).copy(alpha = 0.8f),
+        unfocusedTrailingIconColor = Color(0xFF49454E).copy(alpha = 0.5f),
+        focusedPlaceholderColor = Color(0xFF49454E).copy(alpha = 0.5f),
+        unfocusedPlaceholderColor = Color(0xFF49454E).copy(alpha = 0.4f),
+        errorBorderColor = Color(0xFFEF4444),
+        errorTextColor = Color(0xFF1C1B1F)
+    )
+}
 
 // ── Floating particles ──
 
 @Composable
-private fun FloatingParticles(time: Float) {
+private fun FloatingParticles(time: Float, particleColor: Color = Color.White) {
     val particles = remember {
         List(20) {
             FloatParticle(
@@ -573,7 +614,7 @@ private fun FloatingParticles(time: Float) {
         particles.forEach { p ->
             val y = ((p.baseY - time * p.speed) % 1f + 1f) % 1f
             drawCircle(
-                color = Color.White.copy(alpha = p.alpha),
+                color = particleColor.copy(alpha = p.alpha),
                 radius = p.radius.dp.toPx(),
                 center = Offset(p.x * size.width, y * size.height)
             )
