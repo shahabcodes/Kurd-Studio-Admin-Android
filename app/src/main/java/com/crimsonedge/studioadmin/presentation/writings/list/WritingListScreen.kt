@@ -1,5 +1,6 @@
 package com.crimsonedge.studioadmin.presentation.writings.list
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -8,9 +9,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,12 +34,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
@@ -113,6 +119,12 @@ fun WritingListScreen(
     var searchQuery by remember { mutableStateOf("") }
     var isRefreshing by remember { mutableStateOf(false) }
     var cachedWritings by remember { mutableStateOf<List<Writing>>(emptyList()) }
+    var showBatchDeleteDialog by remember { mutableStateOf(false) }
+
+    // Back handler: clear selection when pressing back in selection mode
+    BackHandler(enabled = uiState.isSelectionMode) {
+        viewModel.clearSelection()
+    }
 
     LaunchedEffect(uiState.writings) {
         if (uiState.writings is Resource.Success) {
@@ -144,24 +156,42 @@ fun WritingListScreen(
         }
     }
 
+    // Batch delete dialog
+    if (showBatchDeleteDialog) {
+        ConfirmDialog(
+            title = "Delete Writings",
+            message = "Are you sure you want to delete ${uiState.selectedIds.size} writings? This action cannot be undone.",
+            onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                showBatchDeleteDialog = false
+                viewModel.deleteSelected()
+            },
+            onDismiss = { showBatchDeleteDialog = false },
+            confirmText = "Delete",
+            isDestructive = true
+        )
+    }
+
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    navController.navigate(Screen.WritingForm.createRoute(null))
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-                expanded = lazyListState.firstVisibleItemIndex == 0,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Writing"
-                    )
-                },
-                text = { Text("New Writing") }
-            )
+            AnimatedVisibility(visible = !uiState.isSelectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        navController.navigate(Screen.WritingForm.createRoute(null))
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White,
+                    expanded = lazyListState.firstVisibleItemIndex == 0,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Writing"
+                        )
+                    },
+                    text = { Text("New Writing") }
+                )
+            }
         },
         snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -170,35 +200,72 @@ fun WritingListScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                placeholder = { Text("Search writings...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Rounded.Search,
-                        contentDescription = "Search"
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search"
-                            )
-                        }
+            // Selection bar or Search bar
+            if (uiState.isSelectionMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { viewModel.clearSelection() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear selection"
+                        )
                     }
-                },
-                shape = MaterialTheme.shapes.extraLarge,
-                singleLine = true
-            )
+                    Text(
+                        text = "${uiState.selectedIds.size} selected",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { viewModel.selectAll() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.SelectAll,
+                            contentDescription = "Select all"
+                        )
+                    }
+                    IconButton(onClick = { showBatchDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete selected",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            } else {
+                // Search bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    placeholder = { Text("Search writings...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Rounded.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear search"
+                                )
+                            }
+                        }
+                    },
+                    shape = MaterialTheme.shapes.extraLarge,
+                    singleLine = true
+                )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             // Filter chips row
             if (uiState.types.isNotEmpty()) {
@@ -320,15 +387,28 @@ fun WritingListScreen(
                                                 scaleY = 0.85f + (progress * 0.15f)
                                             }
                                     ) {
-                                        SwipeToDeleteWritingItem(
-                                            writing = writing,
-                                            onEdit = {
-                                                navController.navigate(
-                                                    Screen.WritingForm.createRoute(writing.id)
-                                                )
-                                            },
-                                            onDelete = { viewModel.deleteWriting(writing.id) }
-                                        )
+                                        if (uiState.isSelectionMode) {
+                                            WritingCard(
+                                                writing = writing,
+                                                onClick = { viewModel.toggleSelection(writing.id) },
+                                                isSelectionMode = true,
+                                                isSelected = writing.id in uiState.selectedIds
+                                            )
+                                        } else {
+                                            SwipeToDeleteWritingItem(
+                                                writing = writing,
+                                                onEdit = {
+                                                    navController.navigate(
+                                                        Screen.WritingForm.createRoute(writing.id)
+                                                    )
+                                                },
+                                                onDelete = { viewModel.deleteWriting(writing.id) },
+                                                onLongPress = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    viewModel.toggleSelection(writing.id)
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -345,7 +425,8 @@ fun WritingListScreen(
 private fun SwipeToDeleteWritingItem(
     writing: Writing,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLongPress: () -> Unit = {}
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isRemoved by remember { mutableStateOf(false) }
@@ -419,24 +500,48 @@ private fun SwipeToDeleteWritingItem(
             WritingCard(
                 writing = writing,
                 onClick = onEdit,
-                modifier = Modifier.scaleOnPress()
+                onLongPress = onLongPress
             )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WritingCard(
     writing: Writing,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongPress: () -> Unit = {}
 ) {
     Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(16.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -446,6 +551,27 @@ private fun WritingCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.Top
         ) {
+            // Selection indicator
+            if (isSelectionMode) {
+                Icon(
+                    imageVector = if (isSelected) {
+                        Icons.Filled.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
+                    contentDescription = if (isSelected) "Selected" else "Not selected",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(top = 2.dp),
+                    tint = if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
             // Icon placeholder for writing
             Card(
                 modifier = Modifier.size(52.dp),

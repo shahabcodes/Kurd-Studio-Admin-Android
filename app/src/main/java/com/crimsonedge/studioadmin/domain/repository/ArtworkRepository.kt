@@ -14,5 +14,6 @@ interface ArtworkRepository {
     fun create(request: ArtworkRequest): Flow<Resource<CreatedResponse>>
     fun update(id: Int, request: ArtworkRequest): Flow<Resource<MessageResponse>>
     fun delete(id: Int): Flow<Resource<MessageResponse>>
+    fun deleteBatch(ids: List<Int>): Flow<Resource<MessageResponse>>
     fun getTypes(): Flow<Resource<List<ArtworkType>>>
 }

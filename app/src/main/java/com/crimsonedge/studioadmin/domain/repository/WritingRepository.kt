@@ -14,5 +14,6 @@ interface WritingRepository {
     fun create(request: WritingRequest): Flow<Resource<CreatedResponse>>
     fun update(id: Int, request: WritingRequest): Flow<Resource<MessageResponse>>
     fun delete(id: Int): Flow<Resource<MessageResponse>>
+    fun deleteBatch(ids: List<Int>): Flow<Resource<MessageResponse>>
     fun getTypes(): Flow<Resource<List<WritingType>>>
 }

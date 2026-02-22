@@ -1,5 +1,6 @@
 package com.crimsonedge.studioadmin.presentation.artworks.list
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -8,7 +9,10 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
@@ -39,6 +44,8 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.StarOutline
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import androidx.compose.material3.Card
@@ -123,6 +130,12 @@ fun ArtworkListScreen(
     val lazyListState = rememberLazyListState()
     var isRefreshing by remember { mutableStateOf(false) }
     var cachedArtworks by remember { mutableStateOf<List<Artwork>>(emptyList()) }
+    var showBatchDeleteDialog by remember { mutableStateOf(false) }
+
+    // Back handler: clear selection when pressing back in selection mode
+    BackHandler(enabled = uiState.isSelectionMode) {
+        viewModel.clearSelection()
+    }
 
     LaunchedEffect(uiState.artworks) {
         if (uiState.artworks is Resource.Success) {
@@ -165,24 +178,42 @@ fun ArtworkListScreen(
         }
     }
 
+    // Batch delete dialog
+    if (showBatchDeleteDialog) {
+        ConfirmDialog(
+            title = "Delete Artworks",
+            message = "Are you sure you want to delete ${uiState.selectedIds.size} artworks? This action cannot be undone.",
+            onConfirm = {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                showBatchDeleteDialog = false
+                viewModel.deleteSelected()
+            },
+            onDismiss = { showBatchDeleteDialog = false },
+            confirmText = "Delete",
+            isDestructive = true
+        )
+    }
+
     Scaffold(
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    navController.navigate(Screen.ArtworkForm.createRoute(null))
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-                expanded = isFabExpanded,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Artwork"
-                    )
-                },
-                text = { Text("New Artwork") }
-            )
+            AnimatedVisibility(visible = !uiState.isSelectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        navController.navigate(Screen.ArtworkForm.createRoute(null))
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White,
+                    expanded = isFabExpanded,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Artwork"
+                        )
+                    },
+                    text = { Text("New Artwork") }
+                )
+            }
         },
         snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -191,37 +222,74 @@ fun ArtworkListScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search artworks...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear"
-                            )
-                        }
+            // Selection bar or Search bar
+            if (uiState.isSelectionMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { viewModel.clearSelection() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear selection"
+                        )
                     }
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.extraLarge,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    cursorColor = MaterialTheme.colorScheme.primary
+                    Text(
+                        text = "${uiState.selectedIds.size} selected",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { viewModel.selectAll() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.SelectAll,
+                            contentDescription = "Select all"
+                        )
+                    }
+                    IconButton(onClick = { showBatchDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete selected",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            } else {
+                // Search bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Search artworks...") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear"
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    )
                 )
-            )
+            }
 
             // Filter chips row
             if (uiState.types.isNotEmpty()) {
@@ -359,15 +427,28 @@ fun ArtworkListScreen(
                                                 scaleY = 0.85f + (progress * 0.15f)
                                             }
                                     ) {
-                                        SwipeToDeleteArtworkItem(
-                                            artwork = artwork,
-                                            onEdit = {
-                                                navController.navigate(
-                                                    Screen.ArtworkForm.createRoute(artwork.id)
-                                                )
-                                            },
-                                            onDelete = { viewModel.deleteArtwork(artwork.id) }
-                                        )
+                                        if (uiState.isSelectionMode) {
+                                            ArtworkCard(
+                                                artwork = artwork,
+                                                onClick = { viewModel.toggleSelection(artwork.id) },
+                                                isSelectionMode = true,
+                                                isSelected = artwork.id in uiState.selectedIds
+                                            )
+                                        } else {
+                                            SwipeToDeleteArtworkItem(
+                                                artwork = artwork,
+                                                onEdit = {
+                                                    navController.navigate(
+                                                        Screen.ArtworkForm.createRoute(artwork.id)
+                                                    )
+                                                },
+                                                onDelete = { viewModel.deleteArtwork(artwork.id) },
+                                                onLongPress = {
+                                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    viewModel.toggleSelection(artwork.id)
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -384,7 +465,8 @@ fun ArtworkListScreen(
 private fun SwipeToDeleteArtworkItem(
     artwork: Artwork,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onLongPress: () -> Unit = {}
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isRemoved by remember { mutableStateOf(false) }
@@ -457,27 +539,50 @@ private fun SwipeToDeleteArtworkItem(
         ) {
             ArtworkCard(
                 artwork = artwork,
-                onClick = onEdit
+                onClick = onEdit,
+                onLongPress = onLongPress
             )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ArtworkCard(
     artwork: Artwork,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongPress: () -> Unit = {}
 ) {
     val thumbnailUrl = "${BuildConfig.API_BASE_URL}images/${artwork.imageId}/thumbnail"
 
     Card(
-        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .scaleOnPress(),
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(16.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -487,6 +592,25 @@ private fun ArtworkCard(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Selection indicator
+            if (isSelectionMode) {
+                Icon(
+                    imageVector = if (isSelected) {
+                        Icons.Filled.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
+                    contentDescription = if (isSelected) "Selected" else "Not selected",
+                    modifier = Modifier.size(24.dp),
+                    tint = if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
             // Thumbnail
             Card(
                 modifier = Modifier.size(64.dp),

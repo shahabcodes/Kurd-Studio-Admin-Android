@@ -19,7 +19,9 @@ data class ArtworkListUiState(
     val types: List<ArtworkType> = emptyList(),
     val selectedType: String? = null,
     val isDeleting: Boolean = false,
-    val deleteError: String? = null
+    val deleteError: String? = null,
+    val selectedIds: Set<Int> = emptySet(),
+    val isSelectionMode: Boolean = false
 )
 
 @HiltViewModel
@@ -86,5 +88,49 @@ class ArtworkListViewModel @Inject constructor(
 
     fun clearDeleteError() {
         _uiState.update { it.copy(deleteError = null) }
+    }
+
+    fun toggleSelection(id: Int) {
+        _uiState.update { state ->
+            val newIds = if (id in state.selectedIds) {
+                state.selectedIds - id
+            } else {
+                state.selectedIds + id
+            }
+            state.copy(selectedIds = newIds, isSelectionMode = newIds.isNotEmpty())
+        }
+    }
+
+    fun selectAll() {
+        val artworks = (_uiState.value.artworks as? Resource.Success)?.data ?: return
+        val allIds = artworks.map { it.id }.toSet()
+        _uiState.update { it.copy(selectedIds = allIds, isSelectionMode = allIds.isNotEmpty()) }
+    }
+
+    fun clearSelection() {
+        _uiState.update { it.copy(selectedIds = emptySet(), isSelectionMode = false) }
+    }
+
+    fun deleteSelected() {
+        val ids = _uiState.value.selectedIds.toList()
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            artworkRepository.deleteBatch(ids).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _uiState.update { it.copy(isDeleting = false, selectedIds = emptySet(), isSelectionMode = false) }
+                        loadArtworks()
+                    }
+                    is Resource.Error -> {
+                        _uiState.update {
+                            it.copy(isDeleting = false, deleteError = result.message)
+                        }
+                    }
+                    is Resource.Loading -> {
+                        _uiState.update { it.copy(isDeleting = true, deleteError = null) }
+                    }
+                }
+            }
+        }
     }
 }

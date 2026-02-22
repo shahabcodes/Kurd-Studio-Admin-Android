@@ -10,3 +10,6 @@ data class CreatedResponse(val id: Int)
 
 @JsonClass(generateAdapter = true)
 data class ErrorResponse(val error: String)
+
+@JsonClass(generateAdapter = true)
+data class BatchDeleteRequest(val ids: List<Int>)

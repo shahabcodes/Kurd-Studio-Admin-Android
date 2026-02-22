@@ -3,6 +3,7 @@ package com.crimsonedge.studioadmin.data.repository
 import com.crimsonedge.studioadmin.data.remote.api.ArtworkApi
 import com.crimsonedge.studioadmin.data.remote.dto.ArtworkDto
 import com.crimsonedge.studioadmin.data.remote.dto.ArtworkRequest
+import com.crimsonedge.studioadmin.data.remote.dto.BatchDeleteRequest
 import com.crimsonedge.studioadmin.data.remote.dto.CreatedResponse
 import com.crimsonedge.studioadmin.data.remote.dto.MessageResponse
 import com.crimsonedge.studioadmin.domain.model.Artwork
@@ -89,6 +90,21 @@ class ArtworkRepositoryImpl @Inject constructor(
         emit(Resource.Loading)
         try {
             val response = api.delete(id)
+            emit(Resource.Success(response))
+        } catch (e: HttpException) {
+            emit(Resource.Error(
+                message = e.message() ?: "HTTP error ${e.code()}",
+                code = e.code()
+            ))
+        } catch (e: Exception) {
+            emit(Resource.Error(message = e.message ?: "Unknown network error"))
+        }
+    }
+
+    override fun deleteBatch(ids: List<Int>): Flow<Resource<MessageResponse>> = flow {
+        emit(Resource.Loading)
+        try {
+            val response = api.deleteBatch(BatchDeleteRequest(ids))
             emit(Resource.Success(response))
         } catch (e: HttpException) {
             emit(Resource.Error(

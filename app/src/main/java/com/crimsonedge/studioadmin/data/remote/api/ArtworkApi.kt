@@ -5,9 +5,11 @@ import com.crimsonedge.studioadmin.data.remote.dto.ArtworkRequest
 import com.crimsonedge.studioadmin.data.remote.dto.ArtworkTypeDto
 import com.crimsonedge.studioadmin.data.remote.dto.CreatedResponse
 import com.crimsonedge.studioadmin.data.remote.dto.MessageResponse
+import com.crimsonedge.studioadmin.data.remote.dto.BatchDeleteRequest
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -31,4 +33,7 @@ interface ArtworkApi {
 
     @DELETE("artworks/{id}")
     suspend fun delete(@Path("id") id: Int): MessageResponse
+
+    @HTTP(method = "DELETE", path = "artworks/batch", hasBody = true)
+    suspend fun deleteBatch(@Body request: BatchDeleteRequest): MessageResponse
 }
