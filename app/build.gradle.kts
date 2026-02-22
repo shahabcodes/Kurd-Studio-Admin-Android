@@ -30,7 +30,7 @@ android {
 
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5001/api/\"")
         buildConfigField("String", "EXPECTED_SIGNATURE_HASH", "\"\"")
-        buildConfigField("String", "ONESIGNAL_APP_ID", "\"\"")
+        buildConfigField("String", "ONESIGNAL_APP_ID", "\"44eb26b4-53cf-452e-99d4-133858f73047\"")
     }
 
     buildTypes {
