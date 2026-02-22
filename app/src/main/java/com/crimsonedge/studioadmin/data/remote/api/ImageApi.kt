@@ -1,5 +1,6 @@
 package com.crimsonedge.studioadmin.data.remote.api
 
+import com.crimsonedge.studioadmin.data.remote.dto.BatchDeleteRequest
 import com.crimsonedge.studioadmin.data.remote.dto.ImageMetaDto
 import com.crimsonedge.studioadmin.data.remote.dto.ImageMetaUpdateRequest
 import com.crimsonedge.studioadmin.data.remote.dto.MessageResponse
@@ -9,6 +10,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -29,4 +31,7 @@ interface ImageApi {
 
     @DELETE("images/{id}")
     suspend fun delete(@Path("id") id: Int): MessageResponse
+
+    @HTTP(method = "DELETE", path = "images/batch", hasBody = true)
+    suspend fun deleteBatch(@Body request: BatchDeleteRequest): MessageResponse
 }

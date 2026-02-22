@@ -12,4 +12,5 @@ interface ImageRepository {
     fun upload(file: MultipartBody.Part): Flow<Resource<Unit>>
     fun updateMeta(id: Int, request: ImageMetaUpdateRequest): Flow<Resource<MessageResponse>>
     fun delete(id: Int): Flow<Resource<MessageResponse>>
+    fun deleteBatch(ids: List<Int>): Flow<Resource<MessageResponse>>
 }

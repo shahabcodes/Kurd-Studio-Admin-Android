@@ -19,7 +19,9 @@ data class ImageListUiState(
     val isUploading: Boolean = false,
     val isDeleting: Boolean = false,
     val selectedImage: ImageMeta? = null,
-    val error: String? = null
+    val error: String? = null,
+    val selectedIds: Set<Int> = emptySet(),
+    val isSelectionMode: Boolean = false
 )
 
 @HiltViewModel
@@ -83,4 +85,46 @@ class ImageListViewModel @Inject constructor(
     }
 
     fun clearError() { _uiState.update { it.copy(error = null) } }
+
+    fun toggleSelection(id: Int) {
+        _uiState.update { state ->
+            val newIds = if (id in state.selectedIds) {
+                state.selectedIds - id
+            } else {
+                state.selectedIds + id
+            }
+            state.copy(selectedIds = newIds, isSelectionMode = newIds.isNotEmpty())
+        }
+    }
+
+    fun selectAll() {
+        val images = (_uiState.value.images as? Resource.Success)?.data ?: return
+        val allIds = images.map { it.id }.toSet()
+        _uiState.update { it.copy(selectedIds = allIds, isSelectionMode = allIds.isNotEmpty()) }
+    }
+
+    fun clearSelection() {
+        _uiState.update { it.copy(selectedIds = emptySet(), isSelectionMode = false) }
+    }
+
+    fun deleteSelected() {
+        val ids = _uiState.value.selectedIds.toList()
+        if (ids.isEmpty()) return
+        viewModelScope.launch {
+            imageRepository.deleteBatch(ids).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _uiState.update { it.copy(isDeleting = false, selectedIds = emptySet(), isSelectionMode = false) }
+                        loadImages()
+                    }
+                    is Resource.Error -> {
+                        _uiState.update { it.copy(isDeleting = false, error = result.message) }
+                    }
+                    is Resource.Loading -> {
+                        _uiState.update { it.copy(isDeleting = true, error = null) }
+                    }
+                }
+            }
+        }
+    }
 }

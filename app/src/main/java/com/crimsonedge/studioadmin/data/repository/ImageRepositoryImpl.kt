@@ -1,6 +1,7 @@
 package com.crimsonedge.studioadmin.data.repository
 
 import com.crimsonedge.studioadmin.data.remote.api.ImageApi
+import com.crimsonedge.studioadmin.data.remote.dto.BatchDeleteRequest
 import com.crimsonedge.studioadmin.data.remote.dto.ImageMetaDto
 import com.crimsonedge.studioadmin.data.remote.dto.ImageMetaUpdateRequest
 import com.crimsonedge.studioadmin.data.remote.dto.MessageResponse
@@ -82,6 +83,18 @@ class ImageRepositoryImpl @Inject constructor(
                 message = e.message() ?: "HTTP error ${e.code()}",
                 code = e.code()
             ))
+        } catch (e: Exception) {
+            emit(Resource.Error(message = e.message ?: "Unknown network error"))
+        }
+    }
+
+    override fun deleteBatch(ids: List<Int>): Flow<Resource<MessageResponse>> = flow {
+        emit(Resource.Loading)
+        try {
+            val response = api.deleteBatch(BatchDeleteRequest(ids))
+            emit(Resource.Success(response))
+        } catch (e: HttpException) {
+            emit(Resource.Error(message = e.message() ?: "HTTP error ${e.code()}", code = e.code()))
         } catch (e: Exception) {
             emit(Resource.Error(message = e.message ?: "Unknown network error"))
         }

@@ -1,16 +1,22 @@
 package com.crimsonedge.studioadmin.presentation.images
 
 import android.text.format.Formatter
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,14 +37,19 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -116,6 +127,12 @@ fun ImageListScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var imageToDelete by remember { mutableStateOf<ImageMeta?>(null) }
     var fullScreenImage by remember { mutableStateOf<ImageMeta?>(null) }
+    var showBatchDeleteDialog by remember { mutableStateOf(false) }
+
+    // Back handler: clear selection when pressing back in selection mode
+    BackHandler(enabled = uiState.isSelectionMode) {
+        viewModel.clearSelection()
+    }
 
     // Photo picker launcher
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -170,6 +187,22 @@ fun ImageListScreen(
                 showDeleteDialog = false
                 imageToDelete = null
             }
+        )
+    }
+
+    // Batch delete confirmation dialog
+    if (showBatchDeleteDialog) {
+        ConfirmDialog(
+            title = "Delete Images",
+            message = "Are you sure you want to delete ${uiState.selectedIds.size} images? This action cannot be undone.",
+            onConfirm = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                showBatchDeleteDialog = false
+                viewModel.deleteSelected()
+            },
+            onDismiss = { showBatchDeleteDialog = false },
+            confirmText = "Delete",
+            isDestructive = true
         )
     }
 
@@ -231,24 +264,26 @@ fun ImageListScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    photoPickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
-                },
-                expanded = fabExpanded,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Upload Image"
-                    )
-                },
-                text = { Text("Upload") },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            )
+            AnimatedVisibility(visible = !uiState.isSelectionMode) {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    expanded = fabExpanded,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Default.CameraAlt,
+                            contentDescription = "Upload Image"
+                        )
+                    },
+                    text = { Text("Upload") },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
+                )
+            }
         },
         snackbarHost = { GradientSnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -257,6 +292,43 @@ fun ImageListScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Selection bar
+            if (uiState.isSelectionMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { viewModel.clearSelection() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear selection"
+                        )
+                    }
+                    Text(
+                        text = "${uiState.selectedIds.size} selected",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = { viewModel.selectAll() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.SelectAll,
+                            contentDescription = "Select all"
+                        )
+                    }
+                    IconButton(onClick = { showBatchDeleteDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete selected",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            }
+
             // Upload progress indicator
             if (uiState.isUploading) {
                 LinearProgressIndicator(
@@ -341,9 +413,19 @@ fun ImageListScreen(
 
                                     ImageGridItem(
                                         image = image,
+                                        isSelectionMode = uiState.isSelectionMode,
+                                        isSelected = image.id in uiState.selectedIds,
                                         onClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            viewModel.selectImage(image)
+                                            if (uiState.isSelectionMode) {
+                                                viewModel.toggleSelection(image.id)
+                                            } else {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                viewModel.selectImage(image)
+                                            }
+                                        },
+                                        onLongPress = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            viewModel.toggleSelection(image.id)
                                         },
                                         modifier = Modifier
                                             .animateItem(
@@ -368,32 +450,75 @@ fun ImageListScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ImageGridItem(
     image: ImageMeta,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
     onClick: () -> Unit,
+    onLongPress: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val thumbnailUrl = "${BuildConfig.API_BASE_URL}images/${image.id}/thumbnail"
 
     Card(
         modifier = modifier
-            .scaleOnPress()
             .aspectRatio(1f)
+            .then(
+                if (isSelected) {
+                    Modifier.border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                        RoundedCornerShape(10.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
             .clip(RoundedCornerShape(10.dp))
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongPress
+            ),
         shape = RoundedCornerShape(10.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        AsyncImage(
-            model = thumbnailUrl,
-            contentDescription = image.altText ?: image.fileName,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            AsyncImage(
+                model = thumbnailUrl,
+                contentDescription = image.altText ?: image.fileName,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+
+            // Selection indicator overlay
+            if (isSelectionMode) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isSelected) {
+                            Icons.Filled.CheckCircle
+                        } else {
+                            Icons.Outlined.RadioButtonUnchecked
+                        },
+                        contentDescription = if (isSelected) "Selected" else "Not selected",
+                        modifier = Modifier.size(22.dp),
+                        tint = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.White.copy(alpha = 0.8f)
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 
