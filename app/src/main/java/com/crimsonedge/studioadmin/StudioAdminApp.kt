@@ -2,7 +2,12 @@ package com.crimsonedge.studioadmin
 
 import android.app.Application
 import android.util.Log
+import com.onesignal.OneSignal
+import com.onesignal.debug.LogLevel
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @HiltAndroidApp
 class StudioAdminApp : Application() {
@@ -10,6 +15,17 @@ class StudioAdminApp : Application() {
     override fun onCreate() {
         super.onCreate()
         setupCrashHandler()
+        setupOneSignal()
+    }
+
+    private fun setupOneSignal() {
+        if (BuildConfig.DEBUG) {
+            OneSignal.Debug.logLevel = LogLevel.VERBOSE
+        }
+        OneSignal.initWithContext(this, BuildConfig.ONESIGNAL_APP_ID)
+        CoroutineScope(Dispatchers.IO).launch {
+            OneSignal.Notifications.requestPermission(true)
+        }
     }
 
     private fun setupCrashHandler() {

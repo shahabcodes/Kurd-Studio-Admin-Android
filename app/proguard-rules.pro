@@ -41,3 +41,11 @@
 -keep class coil3.network.okhttp.internal.OkHttpNetworkFetcherServiceLoaderTarget { *; }
 -keep class coil3.** { *; }
 -dontwarn coil3.**
+
+# OneSignal SDK 5.x
+-keep class com.onesignal.** { *; }
+-dontwarn com.onesignal.**
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.android.gms.**

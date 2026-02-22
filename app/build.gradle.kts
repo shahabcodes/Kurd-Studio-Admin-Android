@@ -30,6 +30,7 @@ android {
 
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5001/api/\"")
         buildConfigField("String", "EXPECTED_SIGNATURE_HASH", "\"\"")
+        buildConfigField("String", "ONESIGNAL_APP_ID", "\"\"")
     }
 
     buildTypes {
@@ -83,6 +84,9 @@ dependencies {
 
     // Navigation
     implementation(libs.navigation.compose)
+
+    // Push Notifications
+    implementation(libs.onesignal)
 
     // Security
     implementation(libs.rootbeer)
