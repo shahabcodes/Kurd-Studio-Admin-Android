@@ -2,8 +2,11 @@ package com.crimsonedge.studioadmin
 
 import android.app.Application
 import android.util.Log
+import com.crimsonedge.studioadmin.notification.PendingNotification
 import com.onesignal.OneSignal
 import com.onesignal.debug.LogLevel
+import com.onesignal.notifications.INotificationClickEvent
+import com.onesignal.notifications.INotificationClickListener
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +29,18 @@ class StudioAdminApp : Application() {
         CoroutineScope(Dispatchers.IO).launch {
             OneSignal.Notifications.requestPermission(true)
         }
+
+        OneSignal.Notifications.addClickListener(object : INotificationClickListener {
+            override fun onClick(event: INotificationClickEvent) {
+                val data = event.notification.additionalData
+                if (data != null && data.optString("type") == "contact_submission") {
+                    val submissionId = data.optInt("submission_id", 0)
+                    if (submissionId > 0) {
+                        PendingNotification.navigateToContact(submissionId)
+                    }
+                }
+            }
+        })
     }
 
     private fun setupCrashHandler() {
