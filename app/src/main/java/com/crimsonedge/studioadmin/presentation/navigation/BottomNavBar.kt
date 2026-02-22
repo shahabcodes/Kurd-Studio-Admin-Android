@@ -44,8 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple400
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 
 data class BottomNavItem(
     val label: String,
@@ -97,9 +96,10 @@ fun BottomNavBar(navController: NavController) {
         label = "nav_indicator"
     )
 
-    val pillGradientStart = Pink500.copy(alpha = 0.14f)
-    val pillGradientEnd = Purple400.copy(alpha = 0.14f)
-    val topLineColor = Pink500.copy(alpha = 0.3f)
+    val brandColors = LocalBrandColors.current
+    val pillGradientStart = brandColors.gradientStart.copy(alpha = 0.14f)
+    val pillGradientEnd = brandColors.gradientEnd.copy(alpha = 0.14f)
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -141,7 +141,7 @@ fun BottomNavBar(navController: NavController) {
 
                     drawRoundRect(
                         brush = Brush.horizontalGradient(
-                            colors = listOf(Pink500, Purple400),
+                            colors = listOf(brandColors.gradientStart, brandColors.gradientEnd),
                             startX = lineX,
                             endX = lineX + lineWidth
                         ),
@@ -162,7 +162,7 @@ fun BottomNavBar(navController: NavController) {
                 )
 
                 val contentColor by animateColorAsState(
-                    targetValue = if (isSelected) Pink500 else MaterialTheme.colorScheme.onSurfaceVariant,
+                    targetValue = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant,
                     animationSpec = tween(200),
                     label = "nav_color_$index"
                 )

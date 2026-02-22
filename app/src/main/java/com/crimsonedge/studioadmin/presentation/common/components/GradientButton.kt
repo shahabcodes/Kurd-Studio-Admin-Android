@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crimsonedge.studioadmin.ui.theme.BrandGradient
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 
 @Composable
 fun GradientButton(
@@ -51,7 +51,7 @@ fun GradientButton(
                 .height(52.dp)
                 .clip(shape)
                 .background(
-                    brush = BrandGradient,
+                    brush = LocalBrandColors.current.gradient,
                     alpha = if (enabled && !isLoading) 1f else 0.5f
                 ),
             contentAlignment = Alignment.Center

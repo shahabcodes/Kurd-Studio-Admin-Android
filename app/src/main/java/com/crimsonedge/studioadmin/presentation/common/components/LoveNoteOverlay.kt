@@ -43,9 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crimsonedge.studioadmin.ui.theme.Pink400
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple400
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -54,6 +52,9 @@ fun LoveNoteOverlay(
     visible: Boolean,
     onDismiss: () -> Unit
 ) {
+    val brandColors = LocalBrandColors.current
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(tween(800)) + scaleIn(tween(600), initialScale = 0.9f),
@@ -110,7 +111,7 @@ fun LoveNoteOverlay(
                     drawHeart(
                         center = Offset(size.width / 2, size.height / 2),
                         size = size.width * 0.45f,
-                        color = Pink500
+                        color = primary
                     )
                 }
 
@@ -122,7 +123,7 @@ fun LoveNoteOverlay(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     ),
-                    color = Pink400,
+                    color = brandColors.gradientStart,
                     textAlign = TextAlign.Center
                 )
 
@@ -154,7 +155,7 @@ fun LoveNoteOverlay(
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
-                    color = Purple400
+                    color = secondary
                 )
 
                 Spacer(modifier = Modifier.height(48.dp))
@@ -176,6 +177,8 @@ fun HeartBurstOverlay(
 ) {
     if (!visible) return
 
+    val heartPrimary = MaterialTheme.colorScheme.primary
+    val heartStart = LocalBrandColors.current.gradientStart
     val hearts = remember {
         List(20) {
             HeartParticle(
@@ -186,7 +189,7 @@ fun HeartBurstOverlay(
                 swayAmplitude = 20f + Math.random().toFloat() * 30f,
                 swayFrequency = 1f + Math.random().toFloat() * 2f,
                 alpha = 0.5f + Math.random().toFloat() * 0.5f,
-                color = if (Math.random() > 0.5) Pink500 else Pink400
+                color = if (Math.random() > 0.5) heartPrimary else heartStart
             )
         }
     }
@@ -219,6 +222,7 @@ fun HeartBurstOverlay(
 
 @Composable
 private fun FloatingHeartsCanvas() {
+    val heartColor = MaterialTheme.colorScheme.primary
     val infiniteTransition = rememberInfiniteTransition(label = "bg_hearts")
     val time by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -251,7 +255,7 @@ private fun FloatingHeartsCanvas() {
                     baseY * size.height + floatY
                 ),
                 size = heartSize,
-                color = Pink500.copy(alpha = 0.08f)
+                color = heartColor.copy(alpha = 0.08f)
             )
         }
     }

@@ -39,7 +39,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 
 @Composable
 fun FormSectionCard(
@@ -74,7 +73,7 @@ fun FormSectionCard(
                     .width(4.dp)
                     .height(if (subtitle != null) 64.dp else 52.dp)
                     .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 0.dp))
-                    .background(Pink500)
+                    .background(MaterialTheme.colorScheme.primary)
             )
 
             Column(modifier = Modifier.weight(1f)) {
@@ -90,7 +89,7 @@ fun FormSectionCard(
                         imageVector = icon,
                         contentDescription = null,
                         modifier = Modifier.size(22.dp),
-                        tint = Pink500
+                        tint = MaterialTheme.colorScheme.primary
                     )
 
                     Spacer(modifier = Modifier.width(12.dp))

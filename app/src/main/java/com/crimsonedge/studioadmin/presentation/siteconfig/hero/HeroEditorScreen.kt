@@ -55,9 +55,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.ImagePickerDialog
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
-import com.crimsonedge.studioadmin.ui.theme.Pink400
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple400
 
 @Composable
 fun HeroEditorScreen(
@@ -149,7 +146,7 @@ fun HeroEditorScreen(
                                 onCheckedChange = viewModel::updateIsActive,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = Pink500,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
                                     uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                     uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
@@ -227,7 +224,7 @@ fun HeroEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.Title,
                                         contentDescription = null,
-                                        tint = Pink500
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             )
@@ -248,7 +245,7 @@ fun HeroEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.Badge,
                                         contentDescription = null,
-                                        tint = Purple400
+                                        tint = MaterialTheme.colorScheme.secondary
                                     )
                                 }
                             )
@@ -274,7 +271,7 @@ fun HeroEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.FormatQuote,
                                         contentDescription = null,
-                                        tint = Pink400
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             )
@@ -304,7 +301,7 @@ fun HeroEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.TouchApp,
                                         contentDescription = null,
-                                        tint = Pink500
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             )
@@ -318,7 +315,7 @@ fun HeroEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.Link,
                                         contentDescription = null,
-                                        tint = Purple400
+                                        tint = MaterialTheme.colorScheme.secondary
                                     )
                                 }
                             )

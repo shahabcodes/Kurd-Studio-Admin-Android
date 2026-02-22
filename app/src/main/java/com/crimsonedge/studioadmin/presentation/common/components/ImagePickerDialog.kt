@@ -53,10 +53,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import coil3.compose.AsyncImage
+import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.domain.model.ImageMeta
 import com.crimsonedge.studioadmin.domain.repository.ImageRepository
 import com.crimsonedge.studioadmin.domain.util.Resource
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -202,7 +202,7 @@ fun ImagePickerDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Pink500,
+                        containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                         disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -232,13 +232,14 @@ private fun ImageThumbnail(
             .clip(MaterialTheme.shapes.medium)
             .border(
                 width = if (isSelected) 3.dp else 0.dp,
-                color = if (isSelected) Pink500 else Color.Transparent,
+                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
                 shape = MaterialTheme.shapes.medium
             )
             .clickable(onClick = onClick)
     ) {
+        val thumbnailUrl = "${BuildConfig.API_BASE_URL}images/${image.id}/thumbnail"
         AsyncImage(
-            model = image.thumbnailUrl,
+            model = thumbnailUrl,
             contentDescription = image.altText ?: image.fileName,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
@@ -254,7 +255,7 @@ private fun ImageThumbnail(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        color = Pink500.copy(alpha = 0.3f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -268,7 +269,7 @@ private fun ImageThumbnail(
                     Icon(
                         imageVector = Icons.Rounded.CheckCircle,
                         contentDescription = "Selected",
-                        tint = Pink500,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(28.dp)
                     )
                 }

@@ -10,16 +10,26 @@ android {
     namespace = "com.crimsonedge.studioadmin"
     compileSdk = 36
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../keystore.jks")
+            storePassword = "kurdstudio123"
+            keyAlias = "kurdstudio"
+            keyPassword = "kurdstudio123"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.crimsonedge.studioadmin"
         minSdk = 29
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5001/api/\"")
+        buildConfigField("String", "EXPECTED_SIGNATURE_HASH", "\"\"")
     }
 
     buildTypes {
@@ -28,11 +38,16 @@ android {
             // buildConfigField("String", "API_BASE_URL", "\"http://192.168.18.117:5001/api/\"")
         }
         release {
-            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "API_BASE_URL", "\"https://admin.kurdstudio.com/api/\"")
+            // TODO: Replace with actual SHA-256 hash of your release signing certificate
+            buildConfigField("String", "EXPECTED_SIGNATURE_HASH", "\"\"")
         }
     }
     compileOptions {
@@ -68,6 +83,10 @@ dependencies {
 
     // Navigation
     implementation(libs.navigation.compose)
+
+    // Security
+    implementation(libs.rootbeer)
+    implementation(libs.biometric)
 
     // Networking
     implementation(libs.retrofit.core)

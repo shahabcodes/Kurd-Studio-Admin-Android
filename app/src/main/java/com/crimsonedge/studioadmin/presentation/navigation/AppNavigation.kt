@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.crimsonedge.studioadmin.data.local.ThemeDataStore
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
 import com.crimsonedge.studioadmin.presentation.artworks.form.ArtworkFormScreen
 import com.crimsonedge.studioadmin.presentation.auth.LoginScreen
@@ -44,6 +45,7 @@ private fun defaultExitTransition(): ExitTransition =
 fun AppNavigation(
     startDestination: String,
     tokenDataStore: TokenDataStore,
+    themeDataStore: ThemeDataStore,
     navController: NavHostController = rememberNavController()
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -165,7 +167,8 @@ fun AppNavigation(
             MainScaffold(navController = navController, showBottomBar = true) {
                 MoreScreen(
                     navController = navController,
-                    tokenDataStore = tokenDataStore
+                    tokenDataStore = tokenDataStore,
+                    themeDataStore = themeDataStore
                 )
             }
         }

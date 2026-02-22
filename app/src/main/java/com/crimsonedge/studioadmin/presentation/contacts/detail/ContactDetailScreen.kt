@@ -57,7 +57,7 @@ import com.crimsonedge.studioadmin.domain.model.Contact
 import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,7 +194,7 @@ private fun ContactDetailContent(
         ) {
             StatusBadge(
                 text = if (contact.isRead) "Read" else "Unread",
-                color = if (contact.isRead) Color(0xFF10B981) else Pink500
+                color = if (contact.isRead) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
             )
             if (contact.isResponded) {
                 StatusBadge(

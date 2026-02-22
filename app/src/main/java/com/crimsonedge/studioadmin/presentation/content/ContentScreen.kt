@@ -39,8 +39,7 @@ import androidx.navigation.NavController
 import com.crimsonedge.studioadmin.presentation.artworks.list.ArtworkListScreen
 import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.writings.list.WritingListScreen
-import com.crimsonedge.studioadmin.ui.theme.BrandGradientHorizontal
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 import kotlinx.coroutines.launch
 
 private enum class ContentTab(
@@ -97,7 +96,7 @@ fun ContentScreen(navController: NavController, initialTab: Int = 0) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 32.dp)
                                 .background(
-                                    brush = BrandGradientHorizontal,
+                                    brush = LocalBrandColors.current.gradientHorizontal,
                                     shape = MaterialTheme.shapes.extraSmall
                                 )
                                 .padding(vertical = 1.5.dp)
@@ -109,7 +108,7 @@ fun ContentScreen(navController: NavController, initialTab: Int = 0) {
                 tabs.forEachIndexed { index, tab ->
                     val selected = pagerState.currentPage == index
                     val animatedColor by animateColorAsState(
-                        targetValue = if (selected) Pink500 else MaterialTheme.colorScheme.onSurfaceVariant,
+                        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         animationSpec = tween(250),
                         label = "tab_color_$index"
                     )

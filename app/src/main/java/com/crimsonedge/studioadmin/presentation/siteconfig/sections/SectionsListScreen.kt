@@ -59,8 +59,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple400
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -213,7 +211,7 @@ private fun SectionCard(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Pink500.copy(alpha = 0.12f)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -221,7 +219,7 @@ private fun SectionCard(
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
-                        color = Pink500
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -258,7 +256,7 @@ private fun SectionCard(
                         .clip(RoundedCornerShape(6.dp))
                         .background(
                             if (section.isActive) {
-                                Pink500.copy(alpha = 0.12f)
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                             } else {
                                 MaterialTheme.colorScheme.surfaceVariant
                             }
@@ -268,7 +266,7 @@ private fun SectionCard(
                     Text(
                         text = if (section.isActive) "Active" else "Inactive",
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (section.isActive) Pink500 else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (section.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -278,7 +276,7 @@ private fun SectionCard(
                 IconButton(
                     onClick = onEditClick,
                     colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Pink500
+                        contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Icon(
@@ -299,13 +297,13 @@ private fun SectionCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Purple400.copy(alpha = 0.12f))
+                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = section.tag,
                             style = MaterialTheme.typography.labelSmall,
-                            color = Purple400
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
@@ -405,7 +403,7 @@ private fun SectionEditBottomSheet(
                         onCheckedChange = onIsActiveChange,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                            checkedTrackColor = Pink500,
+                            checkedTrackColor = MaterialTheme.colorScheme.primary,
                             uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                         )

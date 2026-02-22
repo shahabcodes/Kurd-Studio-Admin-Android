@@ -9,7 +9,7 @@ import okhttp3.MultipartBody
 
 interface ImageRepository {
     fun getAll(): Flow<Resource<List<ImageMeta>>>
-    fun upload(file: MultipartBody.Part): Flow<Resource<ImageMeta>>
+    fun upload(file: MultipartBody.Part): Flow<Resource<Unit>>
     fun updateMeta(id: Int, request: ImageMetaUpdateRequest): Flow<Resource<MessageResponse>>
     fun delete(id: Int): Flow<Resource<MessageResponse>>
 }

@@ -25,7 +25,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +60,7 @@ fun ConfirmDialog(
                 tint = if (isDestructive) {
                     MaterialTheme.colorScheme.error
                 } else {
-                    Pink500
+                    MaterialTheme.colorScheme.primary
                 }
             )
 
@@ -111,7 +110,7 @@ fun ConfirmDialog(
                         containerColor = if (isDestructive) {
                             MaterialTheme.colorScheme.error
                         } else {
-                            Pink500
+                            MaterialTheme.colorScheme.primary
                         },
                         contentColor = MaterialTheme.colorScheme.onError
                     )

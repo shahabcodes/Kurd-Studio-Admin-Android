@@ -51,8 +51,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple400
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -220,13 +218,13 @@ private fun SettingCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Purple400.copy(alpha = 0.12f))
+                            .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = setting.settingType,
                             style = MaterialTheme.typography.labelSmall,
-                            color = Purple400
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
@@ -234,7 +232,7 @@ private fun SettingCard(
                 IconButton(
                     onClick = onEditClick,
                     colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = Pink500
+                        contentColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Icon(
@@ -300,13 +298,13 @@ private fun SettingEditBottomSheet(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
-                        .background(Purple400.copy(alpha = 0.12f))
+                        .background(MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = settingType,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Purple400
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
             }

@@ -21,8 +21,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.ContactMail
-import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Link
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Card
@@ -34,6 +35,8 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -52,26 +55,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.crimsonedge.studioadmin.data.local.ThemeDataStore
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
 import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.components.ConfirmDialog
 import com.crimsonedge.studioadmin.presentation.common.components.LoveNoteOverlay
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
-import com.crimsonedge.studioadmin.ui.theme.BrandGradient
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+import com.crimsonedge.studioadmin.ui.theme.AppTheme
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
+import com.crimsonedge.studioadmin.ui.theme.ThemeMode
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MoreScreen(
     navController: NavController,
-    tokenDataStore: TokenDataStore
+    tokenDataStore: TokenDataStore,
+    themeDataStore: ThemeDataStore
 ) {
     val displayName by tokenDataStore.displayName.collectAsStateWithLifecycle(initialValue = null)
     val username by tokenDataStore.username.collectAsStateWithLifecycle(initialValue = null)
     val scope = rememberCoroutineScope()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showLoveNote by remember { mutableStateOf(false) }
+    var showThemePicker by remember { mutableStateOf(false) }
+    var showChangelog by remember { mutableStateOf(false) }
+
+    val themeModeStr by themeDataStore.themeMode.collectAsStateWithLifecycle(initialValue = "SYSTEM")
+    val appThemeStr by themeDataStore.appTheme.collectAsStateWithLifecycle(initialValue = "ROSE")
+    val currentMode = ThemeMode.entries.find { it.name == themeModeStr } ?: ThemeMode.SYSTEM
+    val currentTheme = AppTheme.entries.find { it.name == appThemeStr } ?: AppTheme.ROSE
+    val biometricEnabled by themeDataStore.biometricEnabled.collectAsStateWithLifecycle(initialValue = true)
 
     if (showLogoutDialog) {
         ConfirmDialog(
@@ -139,7 +153,7 @@ fun MoreScreen(
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .background(BrandGradient),
+                            .background(LocalBrandColors.current.gradient),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -154,7 +168,7 @@ fun MoreScreen(
 
                     Column {
                         Text(
-                            text = displayName ?: "Admin",
+                            text = displayName ?: "Sanya",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -209,6 +223,18 @@ fun MoreScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 MoreMenuItem(
+                    icon = Icons.Outlined.Palette,
+                    title = "Appearance",
+                    subtitle = "Theme, accent color, dark mode",
+                    onClick = { showThemePicker = true }
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+
+                MoreMenuItem(
                     icon = Icons.Outlined.Link,
                     title = "Navigation Links",
                     subtitle = "Manage website navigation menu",
@@ -225,6 +251,64 @@ fun MoreScreen(
                     title = "Social Links",
                     subtitle = "Manage social media links",
                     onClick = { navController.navigate(Screen.SocialLinks.route) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Security",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            ) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = "Biometric Lock",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            text = "Require authentication on app launch",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Outlined.Fingerprint,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = biometricEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch { themeDataStore.setBiometricEnabled(enabled) }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedTrackColor = LocalBrandColors.current.gradientStart
+                            )
+                        )
+                    },
+                    colors = ListItemDefaults.colors(
+                        containerColor = Color.Transparent
+                    )
                 )
             }
 
@@ -266,7 +350,7 @@ fun MoreScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // App version — long press to reveal love note
+            // App version — tap for changelog, long press for love note
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -274,12 +358,12 @@ fun MoreScreen(
                     .combinedClickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() },
-                        onClick = {},
+                        onClick = { showChangelog = true },
                         onLongClick = { showLoveNote = true }
                     )
             ) {
                 Text(
-                    text = "Kurd Studio Admin v1.0",
+                    text = "Kurd Studio Admin v${releaseNotes.first().version}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
@@ -292,6 +376,22 @@ fun MoreScreen(
         visible = showLoveNote,
         onDismiss = { showLoveNote = false }
     )
+
+    // Changelog
+    if (showChangelog) {
+        ChangelogSheet(onDismiss = { showChangelog = false })
+    }
+
+    // Theme picker
+    if (showThemePicker) {
+        ThemePickerSheet(
+            currentMode = currentMode,
+            currentTheme = currentTheme,
+            themeDataStore = themeDataStore,
+            scope = scope,
+            onDismiss = { showThemePicker = false }
+        )
+    }
 }
 
 @Composable

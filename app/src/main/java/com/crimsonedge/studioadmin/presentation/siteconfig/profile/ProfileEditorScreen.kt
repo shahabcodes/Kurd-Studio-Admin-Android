@@ -53,9 +53,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.ImagePickerDialog
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
-import com.crimsonedge.studioadmin.ui.theme.Pink400
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple400
 
 @Composable
 fun ProfileEditorScreen(
@@ -133,7 +130,7 @@ fun ProfileEditorScreen(
                                     .clip(CircleShape)
                                     .border(
                                         width = 3.dp,
-                                        color = Pink400.copy(alpha = 0.5f),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                                         shape = CircleShape
                                     )
                                     .clickable { showImagePicker = true },
@@ -195,7 +192,7 @@ fun ProfileEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.Person,
                                         contentDescription = null,
-                                        tint = Pink500
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 },
                                 isError = uiState.name.isBlank() && uiState.error != null
@@ -235,7 +232,7 @@ fun ProfileEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.Email,
                                         contentDescription = null,
-                                        tint = Purple400
+                                        tint = MaterialTheme.colorScheme.secondary
                                     )
                                 }
                             )
@@ -249,7 +246,7 @@ fun ProfileEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.AlternateEmail,
                                         contentDescription = null,
-                                        tint = Pink400
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             )
@@ -292,7 +289,7 @@ fun ProfileEditorScreen(
                                         Icon(
                                             imageVector = Icons.Rounded.Brush,
                                             contentDescription = null,
-                                            tint = Pink500
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 )
@@ -306,7 +303,7 @@ fun ProfileEditorScreen(
                                         Icon(
                                             imageVector = Icons.Rounded.Numbers,
                                             contentDescription = null,
-                                            tint = Purple400
+                                            tint = MaterialTheme.colorScheme.secondary
                                         )
                                     }
                                 )
@@ -320,7 +317,7 @@ fun ProfileEditorScreen(
                                     Icon(
                                         imageVector = Icons.Rounded.Schedule,
                                         contentDescription = null,
-                                        tint = Pink400
+                                        tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             )

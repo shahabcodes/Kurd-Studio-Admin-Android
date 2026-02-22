@@ -19,3 +19,25 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# RootBeer
+-keep class com.scottyab.rootbeer.** { *; }
+
+# OkHttp / Retrofit
+-dontwarn okhttp3.**
+-dontwarn retrofit2.**
+-keep class okhttp3.** { *; }
+-keep class retrofit2.** { *; }
+
+# Moshi
+-keep class com.squareup.moshi.** { *; }
+-keep @com.squareup.moshi.JsonClass class * { *; }
+
+# Keep DTOs for Moshi
+-keep class com.crimsonedge.studioadmin.data.remote.dto.** { *; }
+-keep class com.crimsonedge.studioadmin.domain.model.** { *; }
+
+# Coil 3 — keep network integration discovered via ServiceLoader
+-keep class coil3.network.okhttp.internal.OkHttpNetworkFetcherServiceLoaderTarget { *; }
+-keep class coil3.** { *; }
+-dontwarn coil3.**

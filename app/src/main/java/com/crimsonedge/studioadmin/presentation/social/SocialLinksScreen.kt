@@ -80,7 +80,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.FormBottomSheet
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -195,7 +194,7 @@ fun SocialLinksScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.showAddDialog() },
-                containerColor = Pink500,
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 shape = CircleShape
             ) {
@@ -594,7 +593,7 @@ private fun SocialLinkFormBottomSheet(
                     onCheckedChange = { isActive = it },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = Color.White,
-                        checkedTrackColor = Pink500
+                        checkedTrackColor = MaterialTheme.colorScheme.primary
                     )
                 )
             }

@@ -104,8 +104,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackb
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
-import com.crimsonedge.studioadmin.ui.theme.BrandGradient
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
@@ -173,7 +172,7 @@ fun ArtworkListScreen(
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     navController.navigate(Screen.ArtworkForm.createRoute(null))
                 },
-                containerColor = Pink500,
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White,
                 expanded = isFabExpanded,
                 icon = {
@@ -219,8 +218,8 @@ fun ArtworkListScreen(
                 singleLine = true,
                 shape = MaterialTheme.shapes.extraLarge,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Pink500,
-                    cursorColor = Pink500
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
 

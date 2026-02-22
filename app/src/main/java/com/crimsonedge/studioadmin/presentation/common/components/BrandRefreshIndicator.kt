@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import com.crimsonedge.studioadmin.ui.theme.BrandGradient
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +92,7 @@ private fun BrandPullIndicator(
                 .width(48.dp)
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(BrandGradient)
+                .background(LocalBrandColors.current.gradient)
         )
     }
 }

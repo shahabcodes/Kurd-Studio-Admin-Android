@@ -4,6 +4,8 @@ import com.crimsonedge.studioadmin.data.remote.dto.ImageMetaDto
 import com.crimsonedge.studioadmin.data.remote.dto.ImageMetaUpdateRequest
 import com.crimsonedge.studioadmin.data.remote.dto.MessageResponse
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -20,7 +22,7 @@ interface ImageApi {
 
     @Multipart
     @POST("images/upload")
-    suspend fun upload(@Part file: MultipartBody.Part): ImageMetaDto
+    suspend fun upload(@Part file: MultipartBody.Part): Response<ResponseBody>
 
     @PUT("images/{id}")
     suspend fun update(@Path("id") id: Int, @Body request: ImageMetaUpdateRequest): MessageResponse

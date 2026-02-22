@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.domain.model.ImageMeta
 import com.crimsonedge.studioadmin.domain.util.Resource
 import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
@@ -84,7 +85,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.ErrorState
 import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackbarHost
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerGridContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
@@ -198,8 +198,9 @@ fun ImageListScreen(
     }
 
     // Full screen image viewer with pinch-to-zoom
+    val fullScreenUrl = fullScreenImage?.let { "${BuildConfig.API_BASE_URL}images/${it.id}" } ?: ""
     FullScreenImageViewer(
-        imageUrl = fullScreenImage?.imageUrl ?: "",
+        imageUrl = fullScreenUrl,
         contentDescription = fullScreenImage?.altText ?: fullScreenImage?.fileName,
         visible = fullScreenImage != null,
         onDismiss = { fullScreenImage = null }
@@ -245,7 +246,7 @@ fun ImageListScreen(
                     )
                 },
                 text = { Text("Upload") },
-                containerColor = Pink500,
+                containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             )
         },
@@ -260,7 +261,7 @@ fun ImageListScreen(
             if (uiState.isUploading) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
-                    color = Pink500,
+                    color = MaterialTheme.colorScheme.primary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             }
@@ -373,6 +374,8 @@ private fun ImageGridItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val thumbnailUrl = "${BuildConfig.API_BASE_URL}images/${image.id}/thumbnail"
+
     Card(
         modifier = modifier
             .scaleOnPress()
@@ -386,7 +389,7 @@ private fun ImageGridItem(
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         AsyncImage(
-            model = image.thumbnailUrl,
+            model = thumbnailUrl,
             contentDescription = image.altText ?: image.fileName,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
@@ -419,8 +422,9 @@ private fun ImageDetailContent(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
+            val imageFileUrl = "${BuildConfig.API_BASE_URL}images/${image.id}"
             AsyncImage(
-                model = image.imageUrl,
+                model = imageFileUrl,
                 contentDescription = image.altText ?: image.fileName,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit

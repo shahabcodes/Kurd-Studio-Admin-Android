@@ -47,12 +47,12 @@ class ImageListViewModel @Inject constructor(
                 when (result) {
                     is Resource.Success -> {
                         _uiState.update { it.copy(isUploading = false) }
-                        loadImages()
+                        loadImages() // Refresh list after successful upload
                     }
                     is Resource.Error -> {
                         _uiState.update { it.copy(isUploading = false, error = result.message) }
                     }
-                    is Resource.Loading -> {
+                    Resource.Loading -> {
                         _uiState.update { it.copy(isUploading = true) }
                     }
                 }

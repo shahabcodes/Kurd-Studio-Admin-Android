@@ -35,11 +35,18 @@ class ImageRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun upload(file: MultipartBody.Part): Flow<Resource<ImageMeta>> = flow {
+    override fun upload(file: MultipartBody.Part): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading)
         try {
-            val dto = api.upload(file)
-            emit(Resource.Success(dto.toDomain()))
+            val response = api.upload(file)
+            if (response.isSuccessful) {
+                emit(Resource.Success(Unit))
+            } else {
+                emit(Resource.Error(
+                    message = "Upload failed: HTTP ${response.code()}",
+                    code = response.code()
+                ))
+            }
         } catch (e: HttpException) {
             emit(Resource.Error(
                 message = e.message() ?: "HTTP error ${e.code()}",

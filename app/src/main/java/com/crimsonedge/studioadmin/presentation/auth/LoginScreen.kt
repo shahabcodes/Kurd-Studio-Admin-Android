@@ -18,7 +18,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -93,11 +92,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.crimsonedge.studioadmin.BuildConfig
 import com.crimsonedge.studioadmin.presentation.common.components.HeartBurstOverlay
 import com.crimsonedge.studioadmin.presentation.common.components.LoveNoteOverlay
-import com.crimsonedge.studioadmin.ui.theme.BrandGradient
-import com.crimsonedge.studioadmin.ui.theme.Pink400
-import com.crimsonedge.studioadmin.ui.theme.Pink500
-import com.crimsonedge.studioadmin.ui.theme.Purple300
-import com.crimsonedge.studioadmin.ui.theme.Purple400
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
+import com.crimsonedge.studioadmin.ui.theme.LocalIsDarkTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -265,13 +261,16 @@ fun LoginScreen(
     )
 
     // ── Theme-adaptive colors ──
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalIsDarkTheme.current
+    val brandColors = LocalBrandColors.current
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
     val bgColor = if (isDark) Color(0xFF08080F) else Color(0xFFFFFBFE)
     val subtleColor = if (isDark) Color.White else Color(0xFF49454E)
-    val particleColor = if (isDark) Color.White else Pink500
+    val particleColor = if (isDark) Color.White else primary
     val orbAlphaMultiplier = if (isDark) 1f else 0.55f
-    val glowBehindLogo = if (isDark) Pink500.copy(alpha = 0.2f) else Pink400.copy(alpha = 0.12f)
-    val fieldGlowColor = if (isDark) Pink400 else Pink500
+    val glowBehindLogo = if (isDark) primary.copy(alpha = 0.2f) else primary.copy(alpha = 0.12f)
+    val fieldGlowColor = primary
 
     // ── UI ──
     Box(
@@ -283,7 +282,7 @@ fun LoginScreen(
         Canvas(Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Pink500.copy(alpha = 0.18f * orbAlphaMultiplier), Color.Transparent)
+                    listOf(brandColors.gradientStart.copy(alpha = 0.18f * orbAlphaMultiplier), Color.Transparent)
                 ),
                 center = Offset(
                     (0.25f + 0.2f * sin(orbTime * 0.7f)) * size.width,
@@ -293,7 +292,7 @@ fun LoginScreen(
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Purple400.copy(alpha = 0.14f * orbAlphaMultiplier), Color.Transparent)
+                    listOf(brandColors.gradientEnd.copy(alpha = 0.14f * orbAlphaMultiplier), Color.Transparent)
                 ),
                 center = Offset(
                     (0.8f + 0.12f * sin(orbTime * 0.5f + 2f)) * size.width,
@@ -303,7 +302,7 @@ fun LoginScreen(
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Pink400.copy(alpha = 0.10f * orbAlphaMultiplier), Color.Transparent)
+                    listOf(brandColors.gradientStart.copy(alpha = 0.10f * orbAlphaMultiplier), Color.Transparent)
                 ),
                 center = Offset(
                     (0.5f + 0.2f * sin(orbTime * 0.3f + 4f)) * size.width,
@@ -357,7 +356,7 @@ fun LoginScreen(
                 ) {
                     drawArc(
                         brush = Brush.sweepGradient(
-                            0f to Pink500.copy(alpha = 0.12f),
+                            0f to brandColors.gradientStart.copy(alpha = 0.12f),
                             0.35f to Color.Transparent,
                             1f to Color.Transparent
                         ),
@@ -368,8 +367,8 @@ fun LoginScreen(
                     )
                     drawArc(
                         brush = Brush.sweepGradient(
-                            0f to Pink500,
-                            0.25f to Purple400,
+                            0f to brandColors.gradientStart,
+                            0.25f to brandColors.gradientEnd,
                             0.38f to Color.Transparent,
                             1f to Color.Transparent
                         ),
@@ -389,7 +388,7 @@ fun LoginScreen(
                             scaleY = heartbeatScale
                         }
                         .clip(CircleShape)
-                        .background(Brush.linearGradient(listOf(Pink500, Purple400)))
+                        .background(brandColors.gradient)
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
@@ -424,8 +423,8 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = 30.sp,
                     brush = Brush.linearGradient(
-                        if (isDark) listOf(Color.White, Pink400, Purple400)
-                        else listOf(Pink500, Purple400, Purple300)
+                        if (isDark) listOf(Color.White, brandColors.gradientStart, brandColors.gradientEnd)
+                        else listOf(brandColors.gradientStart, brandColors.gradientEnd, MaterialTheme.colorScheme.onSecondaryContainer)
                     )
                 )
             )
@@ -472,8 +471,8 @@ fun LoginScreen(
                         .background(
                             Brush.radialGradient(
                                 listOf(
-                                    Pink500.copy(alpha = if (isDark) 0.14f else 0.08f),
-                                    Purple400.copy(alpha = if (isDark) 0.08f else 0.04f),
+                                    brandColors.gradientStart.copy(alpha = if (isDark) 0.14f else 0.08f),
+                                    brandColors.gradientEnd.copy(alpha = if (isDark) 0.08f else 0.04f),
                                     Color.Transparent
                                 )
                             )
@@ -497,8 +496,8 @@ fun LoginScreen(
                                     Color.White.copy(alpha = 0.03f)
                                 )
                                 else listOf(
-                                    Pink400.copy(alpha = 0.25f),
-                                    Purple400.copy(alpha = 0.08f)
+                                    brandColors.gradientStart.copy(alpha = 0.25f),
+                                    brandColors.gradientEnd.copy(alpha = 0.08f)
                                 )
                             ),
                             shape = RoundedCornerShape(28.dp)
@@ -507,7 +506,7 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Username with focus glow + typing ripple
-                    val fieldColors = glassFieldColors(isDark)
+                    val fieldColors = glassFieldColors(isDark, primary)
 
                     OutlinedTextField(
                         value = uiState.username,
@@ -639,7 +638,7 @@ fun LoginScreen(
                                     .fillMaxSize()
                                     .clip(btnShape)
                                     .background(
-                                        brush = BrandGradient,
+                                        brush = brandColors.gradient,
                                         alpha = if (!uiState.isLoading) 1f else 0.7f
                                     )
                                     .drawWithContent {
@@ -807,16 +806,16 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFieldGlow(
 // ── Glass-style text field colors ──
 
 @Composable
-private fun glassFieldColors(isDark: Boolean): TextFieldColors = if (isDark) {
+private fun glassFieldColors(isDark: Boolean, primary: Color): TextFieldColors = if (isDark) {
     OutlinedTextFieldDefaults.colors(
         focusedTextColor = Color.White,
         unfocusedTextColor = Color.White.copy(alpha = 0.8f),
         focusedContainerColor = Color.White.copy(alpha = 0.06f),
         unfocusedContainerColor = Color.White.copy(alpha = 0.03f),
-        focusedBorderColor = Pink500,
+        focusedBorderColor = primary,
         unfocusedBorderColor = Color.White.copy(alpha = 0.10f),
-        cursorColor = Pink400,
-        focusedLeadingIconColor = Pink400,
+        cursorColor = primary,
+        focusedLeadingIconColor = primary,
         unfocusedLeadingIconColor = Color.White.copy(alpha = 0.4f),
         focusedTrailingIconColor = Color.White.copy(alpha = 0.7f),
         unfocusedTrailingIconColor = Color.White.copy(alpha = 0.4f),
@@ -831,10 +830,10 @@ private fun glassFieldColors(isDark: Boolean): TextFieldColors = if (isDark) {
         unfocusedTextColor = Color(0xFF1C1B1F).copy(alpha = 0.8f),
         focusedContainerColor = Color.White.copy(alpha = 0.7f),
         unfocusedContainerColor = Color.White.copy(alpha = 0.5f),
-        focusedBorderColor = Pink500,
+        focusedBorderColor = primary,
         unfocusedBorderColor = Color(0xFF49454E).copy(alpha = 0.20f),
-        cursorColor = Pink500,
-        focusedLeadingIconColor = Pink500,
+        cursorColor = primary,
+        focusedLeadingIconColor = primary,
         unfocusedLeadingIconColor = Color(0xFF49454E).copy(alpha = 0.6f),
         focusedTrailingIconColor = Color(0xFF49454E).copy(alpha = 0.8f),
         unfocusedTrailingIconColor = Color(0xFF49454E).copy(alpha = 0.5f),

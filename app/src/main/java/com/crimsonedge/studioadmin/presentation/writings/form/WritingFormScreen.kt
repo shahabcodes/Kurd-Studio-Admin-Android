@@ -52,7 +52,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormSectionCar
 import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -192,8 +192,8 @@ fun WritingFormScreen(
                                         onClick = { viewModel.updateWritingTypeId(type.id) },
                                         label = { Text(type.displayName) },
                                         colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = Pink500.copy(alpha = 0.15f),
-                                            selectedLabelColor = Pink500
+                                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                            selectedLabelColor = MaterialTheme.colorScheme.primary
                                         )
                                     )
                                 }

@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 
 @Composable
 fun GradientSnackbarHost(
@@ -30,7 +29,7 @@ fun GradientSnackbarHost(
 private fun BrandSnackbar(data: SnackbarData) {
     Snackbar(
         snackbarData = data,
-        containerColor = Pink500,
+        containerColor = MaterialTheme.colorScheme.primary,
         contentColor = Color.White,
         actionColor = Color.White.copy(alpha = 0.9f),
         shape = MaterialTheme.shapes.medium,

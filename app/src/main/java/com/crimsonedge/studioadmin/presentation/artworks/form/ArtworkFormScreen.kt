@@ -63,7 +63,7 @@ import com.crimsonedge.studioadmin.presentation.common.components.FormTextField
 import com.crimsonedge.studioadmin.presentation.common.components.GradientButton
 import com.crimsonedge.studioadmin.presentation.common.components.ImagePickerDialog
 import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -184,7 +184,7 @@ fun ArtworkFormScreen(
                                 Icon(
                                     imageVector = Icons.Default.AutoFixHigh,
                                     contentDescription = "Auto-generate slug",
-                                    tint = Pink500
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
@@ -207,8 +207,8 @@ fun ArtworkFormScreen(
                                         onClick = { viewModel.updateTypeId(type.id) },
                                         label = { Text(type.displayName) },
                                         colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = Pink500.copy(alpha = 0.15f),
-                                            selectedLabelColor = Pink500
+                                            selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                            selectedLabelColor = MaterialTheme.colorScheme.primary
                                         )
                                     )
                                 }
@@ -308,7 +308,7 @@ fun ArtworkFormScreen(
                                 onCheckedChange = viewModel::updateFeatured,
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                    checkedTrackColor = Pink500,
+                                    checkedTrackColor = MaterialTheme.colorScheme.primary,
                                     uncheckedThumbColor = MaterialTheme.colorScheme.outline,
                                     uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )

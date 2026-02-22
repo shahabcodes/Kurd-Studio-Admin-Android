@@ -44,8 +44,7 @@ import com.crimsonedge.studioadmin.presentation.siteconfig.hero.HeroEditorScreen
 import com.crimsonedge.studioadmin.presentation.siteconfig.profile.ProfileEditorScreen
 import com.crimsonedge.studioadmin.presentation.siteconfig.sections.SectionsListScreen
 import com.crimsonedge.studioadmin.presentation.siteconfig.settings.SettingsListScreen
-import com.crimsonedge.studioadmin.ui.theme.BrandGradientHorizontal
-import com.crimsonedge.studioadmin.ui.theme.Pink500
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 import kotlinx.coroutines.launch
 
 private enum class SiteConfigTab(
@@ -106,7 +105,7 @@ fun SiteConfigScreen() {
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp)
                                 .background(
-                                    brush = BrandGradientHorizontal,
+                                    brush = LocalBrandColors.current.gradientHorizontal,
                                     shape = MaterialTheme.shapes.extraSmall
                                 )
                                 .padding(vertical = 1.5.dp)
@@ -118,7 +117,7 @@ fun SiteConfigScreen() {
                 tabs.forEachIndexed { index, tab ->
                     val selected = pagerState.currentPage == index
                     val animatedColor by animateColorAsState(
-                        targetValue = if (selected) Pink500 else MaterialTheme.colorScheme.onSurfaceVariant,
+                        targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         animationSpec = tween(250),
                         label = "tab_color_$index"
                     )

@@ -2,6 +2,7 @@ package com.crimsonedge.studioadmin.di
 
 import android.content.Context
 import com.crimsonedge.studioadmin.BuildConfig
+import com.crimsonedge.studioadmin.data.local.ThemeDataStore
 import com.crimsonedge.studioadmin.data.local.TokenDataStore
 import com.crimsonedge.studioadmin.data.remote.api.ArtworkApi
 import com.crimsonedge.studioadmin.data.remote.api.AuthApi
@@ -12,6 +13,7 @@ import com.crimsonedge.studioadmin.data.remote.api.NavigationApi
 import com.crimsonedge.studioadmin.data.remote.api.SiteApi
 import com.crimsonedge.studioadmin.data.remote.api.WritingApi
 import com.crimsonedge.studioadmin.data.remote.interceptor.AuthInterceptor
+import com.crimsonedge.studioadmin.data.remote.interceptor.SecurityCheckInterceptor
 import com.crimsonedge.studioadmin.data.remote.interceptor.TokenAuthenticator
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -20,6 +22,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.CertificatePinner
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -49,7 +52,35 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAuthApi(moshi: Moshi): AuthApi {
+    fun provideThemeDataStore(
+        @ApplicationContext context: Context
+    ): ThemeDataStore {
+        return ThemeDataStore(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCertificatePinner(): CertificatePinner {
+        return if (BuildConfig.DEBUG) {
+            CertificatePinner.DEFAULT
+        } else {
+            CertificatePinner.Builder()
+                .add(
+                    "admin.kurdstudio.com",
+                    "sha256/9MBQoq7S0tcAlSzqr/3Roiz1J48UDXINYyzqr+w7FzY=", // Leaf
+                    "sha256/iFvwVyJSxnQdyaUvUERIf+8qk7gRze3612JMwoO3zdU="  // Intermediate (Cloudflare)
+                )
+                .build()
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthApi(
+        moshi: Moshi,
+        securityCheckInterceptor: SecurityCheckInterceptor,
+        certificatePinner: CertificatePinner
+    ): AuthApi {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
@@ -59,7 +90,9 @@ object AppModule {
         }
 
         val client = OkHttpClient.Builder()
+            .addInterceptor(securityCheckInterceptor)
             .addInterceptor(loggingInterceptor)
+            .certificatePinner(certificatePinner)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -103,14 +136,18 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
+        securityCheckInterceptor: SecurityCheckInterceptor,
         authInterceptor: AuthInterceptor,
         tokenAuthenticator: TokenAuthenticator,
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        certificatePinner: CertificatePinner
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .addInterceptor(securityCheckInterceptor)
             .addInterceptor(authInterceptor)
             .addInterceptor(loggingInterceptor)
             .authenticator(tokenAuthenticator)
+            .certificatePinner(certificatePinner)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)

@@ -13,6 +13,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -76,8 +78,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.LoadingShimmer
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
 import com.crimsonedge.studioadmin.presentation.common.components.BrandLogo
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
-import com.crimsonedge.studioadmin.ui.theme.Pink400
-import com.crimsonedge.studioadmin.ui.theme.Purple400
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -201,6 +201,7 @@ fun DashboardScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun DashboardContent(
     stats: DashboardStats,
@@ -224,16 +225,16 @@ private fun DashboardContent(
                     label = "Artworks",
                     count = stats.artworkCount,
                     icon = Icons.Rounded.Palette,
-                    tintColor = Pink400,
-                    backgroundColor = Pink400.copy(alpha = 0.12f),
+                    tintColor = MaterialTheme.colorScheme.primary,
+                    backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
                     route = Screen.Content.createRoute(0)
                 ),
                 StatItem(
                     label = "Writings",
                     count = stats.writingCount,
                     icon = Icons.Rounded.EditNote,
-                    tintColor = Purple400,
-                    backgroundColor = Purple400.copy(alpha = 0.12f),
+                    tintColor = MaterialTheme.colorScheme.secondary,
+                    backgroundColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f),
                     route = Screen.Content.createRoute(1)
                 ),
                 StatItem(
@@ -326,9 +327,10 @@ private fun DashboardContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 AssistChip(
                     onClick = {
@@ -343,7 +345,7 @@ private fun DashboardContent(
                         )
                     },
                     colors = AssistChipDefaults.assistChipColors(
-                        leadingIconContentColor = Pink400,
+                        leadingIconContentColor = MaterialTheme.colorScheme.primary,
                         labelColor = MaterialTheme.colorScheme.onSurface
                     )
                 )
@@ -361,7 +363,7 @@ private fun DashboardContent(
                         )
                     },
                     colors = AssistChipDefaults.assistChipColors(
-                        leadingIconContentColor = Purple400,
+                        leadingIconContentColor = MaterialTheme.colorScheme.secondary,
                         labelColor = MaterialTheme.colorScheme.onSurface
                     )
                 )

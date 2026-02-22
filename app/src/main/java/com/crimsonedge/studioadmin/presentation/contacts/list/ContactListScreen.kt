@@ -83,7 +83,6 @@ import com.crimsonedge.studioadmin.presentation.common.components.GradientSnackb
 import com.crimsonedge.studioadmin.presentation.common.components.ShimmerListContent
 import com.crimsonedge.studioadmin.presentation.common.modifiers.scaleOnPress
 import com.crimsonedge.studioadmin.presentation.navigation.Screen
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
 
@@ -430,7 +429,7 @@ private fun ContactCard(
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         if (!contact.isRead) {
-                            Pink500.copy(alpha = 0.15f)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         } else {
                             MaterialTheme.colorScheme.surfaceVariant
                         }
@@ -441,7 +440,7 @@ private fun ContactCard(
                     imageVector = if (!contact.isRead) Icons.Outlined.Mail else Icons.Outlined.MarkEmailRead,
                     contentDescription = null,
                     modifier = Modifier.size(22.dp),
-                    tint = if (!contact.isRead) Pink500 else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (!contact.isRead) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -471,7 +470,7 @@ private fun ContactCard(
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
-                                .background(Pink500)
+                                .background(MaterialTheme.colorScheme.primary)
                         )
                     }
                 }

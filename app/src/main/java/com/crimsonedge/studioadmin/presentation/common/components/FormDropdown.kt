@@ -16,7 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.crimsonedge.studioadmin.ui.theme.Pink500
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,8 +49,8 @@ fun FormDropdown(
                 .fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Pink500,
-                focusedLabelColor = Pink500
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                focusedLabelColor = MaterialTheme.colorScheme.primary
             )
         )
 

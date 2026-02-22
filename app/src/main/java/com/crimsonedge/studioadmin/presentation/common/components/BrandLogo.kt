@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.crimsonedge.studioadmin.ui.theme.BrandGradient
+import com.crimsonedge.studioadmin.ui.theme.LocalBrandColors
 
 @Composable
 fun BrandLogo(modifier: Modifier = Modifier) {
@@ -34,7 +34,7 @@ fun BrandLogo(modifier: Modifier = Modifier) {
         modifier = modifier
             .size(32.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(BrandGradient)
+            .background(LocalBrandColors.current.gradient)
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
