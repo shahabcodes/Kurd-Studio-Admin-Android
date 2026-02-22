@@ -1,6 +1,8 @@
 package com.crimsonedge.studioadmin
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.util.Log
 import com.crimsonedge.studioadmin.notification.PendingNotification
 import com.onesignal.OneSignal
@@ -21,7 +23,21 @@ class StudioAdminApp : Application() {
         setupOneSignal()
     }
 
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(
+            CONTACT_CHANNEL_ID,
+            "Contact Submissions",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Notifications for new contact form submissions"
+        }
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(channel)
+    }
+
     private fun setupOneSignal() {
+        createNotificationChannel()
+
         if (BuildConfig.DEBUG) {
             OneSignal.Debug.logLevel = LogLevel.VERBOSE
         }
@@ -54,5 +70,6 @@ class StudioAdminApp : Application() {
 
     companion object {
         private const val TAG = "StudioAdminApp"
+        const val CONTACT_CHANNEL_ID = "contact_submissions"
     }
 }
